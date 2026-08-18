@@ -1,0 +1,1 @@
+web: uvicorn auth_api_sketch:app --host 0.0.0.0 --port $PORT

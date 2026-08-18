@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS study_sessions_one_active_per_student;

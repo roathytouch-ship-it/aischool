@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI School — Local API Test</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9bb4;
+      --accent: #3b82f6;
+      --ok: #22c55e;
+      --err: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+      line-height: 1.45;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 4px; }
+    .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      max-width: 520px;
+    }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .row > * { flex: 1; min-width: 120px; }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+    }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.secondary { background: #334155; }
+    button.danger { background: #b91c1c; }
+    button.ok { background: #15803d; }
+    #log {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.75rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 160px;
+      overflow-y: auto;
+      color: var(--muted);
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid var(--border);
+    }
+    #chat {
+      max-height: 280px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+      min-height: 80px;
+    }
+    .bubble {
+      max-width: 90%;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+    }
+    .bubble.user { align-self: flex-end; background: #1e3a5f; }
+    .bubble.assistant { align-self: flex-start; background: #243044; }
+    .bubble.system { align-self: center; color: var(--muted); font-size: 0.8rem; background: transparent; }
+    .status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: #334155;
+      color: var(--muted);
+    }
+    .status.on { background: #14532d; color: #bbf7d0; }
+    .hint { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <h1>AI School — Local API Test</h1>
+  <p class="sub">Minimal real frontend → your local API + Postgres. Not the full Mini App.</p>
+
+  <div class="card">
+    <label>API base URL</label>
+    <input id="apiBase" value="http://127.0.0.1:8080" />
+    <div class="row">
+      <button type="button" class="secondary" id="btnHealth">Check /health</button>
+      <span class="status" id="apiStatus">API: unknown</span>
+    </div>
+    <p class="hint">Start API first: <code>python -m uvicorn auth_api_sketch:app --host 127.0.0.1 --port 8080</code></p>
+  </div>
+
+  <div class="card">
+    <strong>1. PIN login</strong>
+    <label style="margin-top:10px">Student ID</label>
+    <input id="studentId" value="stu_demo_sokha" />
+    <label>PIN</label>
+    <input id="pin" value="4821" maxlength="4" inputmode="numeric" />
+    <button type="button" id="btnLogin">Login</button>
+    <p class="hint" id="who">Not logged in</p>
+  </div>
+
+  <div class="card">
+    <strong>2. Start lesson</strong>
+    <label style="margin-top:10px">Subject</label>
+    <select id="subject">
+      <option value="coding">coding (Subject Pass on seed)</option>
+      <option value="general_math">general_math (free core)</option>
+      <option value="general_english">general_english (free core)</option>
+    </select>
+    <button type="button" id="btnStart" disabled>Start lesson</button>
+    <p class="hint" id="sessionInfo">No active session</p>
+  </div>
+
+  <div class="card">
+    <strong>3. Chat</strong>
+    <div id="chat"></div>
+    <textarea id="msg" placeholder="Type a message…" disabled></textarea>
+    <div class="row">
+      <button type="button" id="btnSend" disabled>Send</button>
+      <button type="button" class="danger" id="btnEnd" disabled>End lesson</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <strong>Log</strong>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    const state = {
+      accessToken: null,
+      refreshToken: null,
+      principal: null,
+      sessionId: null,
+    };
+
+    function apiBase() {
+      return (document.getElementById('apiBase').value || '').replace(/\/$/, '');
+    }
+
+    function log(msg, obj) {
+      const el = document.getElementById('log');
+      const line = obj !== undefined
+        ? msg + ' ' + JSON.stringify(obj, null, 0).slice(0, 400)
+        : msg;
+      el.textContent = (new Date().toLocaleTimeString() + '  ' + line + '\n') + el.textContent;
+    }
+
+    function setApiStatus(ok, detail) {
+      const el = document.getElementById('apiStatus');
+      el.textContent = ok ? 'API: ok (' + (detail || '') + ')' : 'API: down';
+      el.className = 'status' + (ok ? ' on' : '');
+    }
+
+    function addBubble(role, text) {
+      const chat = document.getElementById('chat');
+      const div = document.createElement('div');
+      div.className = 'bubble ' + role;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function setLoggedIn(principal) {
+      state.principal = principal;
+      const who = document.getElementById('who');
+      if (!principal) {
+        who.textContent = 'Not logged in';
+        document.getElementById('btnStart').disabled = true;
+        return;
+      }
+      who.textContent =
+        'Logged in: ' +
+        (principal.display_name || principal.student_id || principal.account_id) +
+        ' · ' +
+        (principal.plan_tier || '') +
+        ' · grade ' +
+        (principal.grade || '?');
+      document.getElementById('btnStart').disabled = false;
+    }
+
+    function setSession(session, messages) {
+      state.sessionId = session ? session.id : null;
+      const info = document.getElementById('sessionInfo');
+      const on = !!session;
+      document.getElementById('msg').disabled = !on;
+      document.getElementById('btnSend').disabled = !on;
+      document.getElementById('btnEnd').disabled = !on;
+      document.getElementById('btnStart').disabled = on || !state.principal;
+      if (!session) {
+        info.textContent = 'No active session';
+        return;
+      }
+      info.textContent =
+        session.id +
+        ' · ' +
+        session.subject_key +
+        ' · ' +
+        Math.round((session.duration_limit_sec || 0) / 60) +
+        ' min · ' +
+        session.status;
+      document.getElementById('chat').innerHTML = '';
+      (messages || []).forEach(function (m) {
+        addBubble(m.role === 'user' ? 'user' : m.role === 'assistant' ? 'assistant' : 'system', m.content);
+      });
+    }
+
+    async function request(path, options) {
+      const opts = options || {};
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      if (state.accessToken) headers['Authorization'] = 'Bearer ' + state.accessToken;
+      const res = await fetch(apiBase() + path, {
+        method: opts.method || 'GET',
+        headers: headers,
+        body: opts.body != null ? JSON.stringify(opts.body) : undefined,
+      });
+      let data = null;
+      const text = await res.text();
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = { raw: text }; }
+      if (!res.ok) {
+        const err = new Error((data && (data.message || (data.detail && (data.detail.message || JSON.stringify(data.detail))))) || ('HTTP ' + res.status));
+        err.status = res.status;
+        err.data = data;
+        throw err;
+      }
+      return data;
+    }
+
+    document.getElementById('btnHealth').onclick = async function () {
+      try {
+        const h = await request('/health');
+        setApiStatus(true, h.storage || 'up');
+        log('health', h);
+      } catch (e) {
+        setApiStatus(false);
+        log('health FAIL: ' + e.message);
+        alert('API not reachable. Is uvicorn running?\n' + e.message);
+      }
+    };
+
+    document.getElementById('btnLogin').onclick = async function () {
+      try {
+        const body = {
+          student_id: document.getElementById('studentId').value.trim(),
+          pin: document.getElementById('pin').value.trim(),
+        };
+        const data = await request('/v1/auth/pin', { method: 'POST', body: body });
+        state.accessToken = data.access_token;
+        state.refreshToken = data.refresh_token;
+        setLoggedIn(data.principal);
+        setSession(null);
+        log('login OK', data.principal);
+      } catch (e) {
+        log('login FAIL: ' + e.message);
+        alert('Login failed: ' + e.message);
+      }
+    };
+
+    document.getElementById('btnStart').onclick = async function () {
+      try {
+        const subject = document.getElementById('subject').value;
+        const data = await request('/v1/sessions/start', {
+          method: 'POST',
+          body: { subject_key: subject, mode: 'lesson' },
+        });
+        setSession(data.session, data.messages);
+        log('start OK', data.session);
+      } catch (e) {
+        log('start FAIL: ' + e.message);
+        alert('Start failed: ' + e.message);
+      }
+    };
+
+    document.getElementById('btnSend').onclick = async function () {
+      const text = document.getElementById('msg').value.trim();
+      if (!text || !state.sessionId) return;
+      try {
+        const data = await request('/v1/sessions/' + encodeURIComponent(state.sessionId) + '/messages', {
+          method: 'POST',
+          body: { content: text },
+        });
+        document.getElementById('msg').value = '';
+        if (data.user) addBubble('user', data.user.content);
+        if (data.assistant) addBubble('assistant', data.assistant.content);
+        log('message OK');
+      } catch (e) {
+        log('message FAIL: ' + e.message);
+        alert('Send failed: ' + e.message);
+      }
+    };
+
+    document.getElementById('btnEnd').onclick = async function () {
+      if (!state.sessionId) return;
+      try {
+        const data = await request('/v1/sessions/' + encodeURIComponent(state.sessionId) + '/end', {
+          method: 'POST',
+          body: {},
+        });
+        const recap = (data.recap && data.recap.summary_en) || 'Ended';
+        addBubble('system', 'Ended — ' + recap);
+        setSession(null);
+        log('end OK', data.recap);
+      } catch (e) {
+        log('end FAIL: ' + e.message);
+        alert('End failed: ' + e.message);
+      }
+    };
+
+    // Best-effort End on tab close / hide (not 100% reliable)
+    async function endBeacon() {
+      if (!state.sessionId || !state.token) return;
+      const url = API_BASE.replace(/\/$/, '') + '/v1/sessions/' + encodeURIComponent(state.sessionId) + '/end';
+      try {
+        if (navigator.sendBeacon) {
+          // sendBeacon cannot set Authorization easily — fallback fetch keepalive
+        }
+        await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + state.token,
+          },
+          body: '{}',
+          keepalive: true,
+        });
+      } catch (e) {}
+      state.sessionId = null;
+    }
+    window.addEventListener('pagehide', function () { endBeacon(); });
+    window.addEventListener('beforeunload', function () { endBeacon(); });
+
+    // Idle 15 min with open session → auto End + note
+    let lastActivity = Date.now();
+    function touch() { lastActivity = Date.now(); }
+    ['click', 'keydown', 'touchstart'].forEach(function (ev) {
+      document.addEventListener(ev, touch, { passive: true });
+    });
+    setInterval(async function () {
+      if (!state.sessionId) return;
+      if (Date.now() - lastActivity < 15 * 60 * 1000) return;
+      try {
+        const data = await request('/v1/sessions/' + encodeURIComponent(state.sessionId) + '/end', {
+          method: 'POST',
+          body: {},
+        });
+        const recap = (data.recap && data.recap.summary_en) || 'Ended (idle)';
+        addBubble('system', 'Idle timeout — ' + recap);
+        setSession(null);
+        log('idle auto-end OK');
+      } catch (e) {
+        log('idle auto-end FAIL: ' + e.message);
+      }
+      lastActivity = Date.now();
+    }, 30000);
+
+    // Auto health on load
+    document.getElementById('btnHealth').click();
+  </script>
+</body>
+</html>
