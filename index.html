@@ -1093,8 +1093,20 @@
       <button type="button" onclick="selectGrade(11,this)">11</button>
       <button type="button" class="grade-12-plus" onclick="selectGrade(12,this)" title="Grade 12 and beyond">12+</button>
     </div>
-    <button class="btn-primary" onclick="showOnboard('plan')">Continue</button>
+    <button class="btn-primary" onclick="goOnboardNickname()">Continue</button>
     <button class="btn-secondary" style="margin-top:10px" onclick="showOnboard('auth')">← Back</button>
+  </div>
+
+  <div class="onboard" id="onboard-nickname">
+    <h1>What should teachers call you?</h1>
+    <div class="sub">Required · use a first name or nickname (not your student ID)</div>
+    <input id="onboardNicknameInput" type="text" maxlength="24" placeholder="e.g. Sokha, Emma, Alex"
+      style="width:100%;padding:14px;border-radius:12px;border:1.5px solid #cbd5e1;font-size:16px;margin:8px 0 6px;box-sizing:border-box" />
+    <p id="onboardNicknameHint" style="font-size:12px;color:var(--tg-hint);margin:0 0 14px;line-height:1.4">
+      Teachers will use this name in lessons. It cannot be left empty.
+    </p>
+    <button class="btn-primary" onclick="continueFromNickname()">Continue</button>
+    <button class="btn-secondary" style="margin-top:10px" onclick="showOnboard('grade')">← Back</button>
   </div>
 
   <div class="onboard" id="onboard-plan">
@@ -1112,7 +1124,7 @@
       Gold · $18/mo
       <small>4 × 60 min · AI Voice + Review Pool</small>
     </button>
-    <button class="btn-secondary" style="margin-top:12px" onclick="showOnboard('grade')">← Back</button>
+    <button class="btn-secondary" style="margin-top:12px" onclick="showOnboard('nickname')">← Back</button>
   </div>
 
   <div class="app-shell" id="appShell">
@@ -1631,8 +1643,25 @@
         <div class="avatar emoji-av" id="profileAvatar" style="width:64px;height:64px;font-size:32px;display:flex;align-items:center;justify-content:center">🌟</div>
         <span class="season-chip show" id="profileSeasonChip" title="Active season (demo)">✨ Mid-Autumn season</span>
       </div>
-      <h3 style="margin-bottom:4px">Emma</h3>
+      <h3 style="margin-bottom:4px" id="profileDisplayName">Emma</h3>
       <p style="color:var(--tg-hint);font-size:13px" id="profileGradeLine">Student · Grade 7 · Gold Plan</p>
+
+      <div style="text-align:left;margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0">
+        <label for="profileNicknameInput" style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">
+          Nickname <span style="color:#dc2626">*</span>
+        </label>
+        <p style="font-size:11px;color:var(--tg-hint);margin:0 0 8px;line-height:1.35">
+          Required · what AI teachers call you in class · not your student ID
+        </p>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="profileNicknameInput" type="text" maxlength="24" required
+            placeholder="Your nickname"
+            style="flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid #cbd5e1;font-size:14px;box-sizing:border-box" />
+          <button type="button" class="btn-primary" style="width:auto;padding:10px 14px;margin:0;flex-shrink:0"
+            onclick="saveProfileNickname()">Save</button>
+        </div>
+        <p id="profileNicknameError" style="display:none;font-size:12px;color:#dc2626;margin:6px 0 0">Please enter a nickname — it cannot be empty.</p>
+      </div>
 
       <!-- Demo: Ready for next grade (actionable) -->
       <button type="button" class="ready-grade-badge" id="readyGradeBadge" onclick="confirmGradeUpgrade(8)">
@@ -2492,15 +2521,103 @@
     // Onboarding
     let selectedGrade = 7;
     let signupRole = 'student'; // 'student' | 'parent'
+    let pendingNickname = '';
+
+    function normalizeNickname(raw) {
+      return String(raw || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 24);
+    }
+    function isValidNickname(raw) {
+      const n = normalizeNickname(raw);
+      if (!n) return false;
+      if (n.length < 2) return false;
+      if (/^stu[_-]/i.test(n)) return false;
+      return true;
+    }
+    function getStudentNickname() {
+      try {
+        const n = normalizeNickname(localStorage.getItem('aischool_nickname') || '');
+        if (isValidNickname(n)) return n;
+      } catch (e) {}
+      return 'Emma'; // demo default — never leave teachers without a name
+    }
+    function setStudentNickname(raw) {
+      const n = normalizeNickname(raw);
+      if (!isValidNickname(n)) return false;
+      try { localStorage.setItem('aischool_nickname', n); } catch (e) {}
+      pendingNickname = n;
+      applyNicknameToUI(n);
+      return true;
+    }
+    function applyNicknameToUI(n) {
+      const name = isValidNickname(n) ? normalizeNickname(n) : getStudentNickname();
+      const header = document.getElementById('headerName');
+      const profile = document.getElementById('profileDisplayName');
+      const input = document.getElementById('profileNicknameInput');
+      if (header) header.textContent = name;
+      if (profile) profile.textContent = name;
+      if (input && document.activeElement !== input) input.value = name;
+    }
+
     function showOnboard(step) {
       document.querySelectorAll('.onboard').forEach(el => el.classList.remove('active'));
       const el = document.getElementById('onboard-' + step);
       if (el) el.classList.add('active');
+      if (step === 'nickname') {
+        const inp = document.getElementById('onboardNicknameInput');
+        if (inp) {
+          inp.value = pendingNickname || '';
+          setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50);
+        }
+      }
     }
     function selectGrade(g, btn) {
       selectedGrade = g;
       document.querySelectorAll('#gradeGrid button').forEach(b => b.classList.remove('selected'));
       if (btn) btn.classList.add('selected');
+    }
+    function goOnboardNickname() {
+      showOnboard('nickname');
+    }
+    function continueFromNickname() {
+      const inp = document.getElementById('onboardNicknameInput');
+      const hint = document.getElementById('onboardNicknameHint');
+      const raw = inp ? inp.value : '';
+      if (!isValidNickname(raw)) {
+        if (hint) {
+          hint.style.color = '#dc2626';
+          hint.textContent = 'Please enter a nickname (at least 2 characters). It cannot be empty or a student ID.';
+        }
+        if (inp) inp.focus();
+        showToast('Nickname is required');
+        return;
+      }
+      pendingNickname = normalizeNickname(raw);
+      if (hint) {
+        hint.style.color = 'var(--tg-hint)';
+        hint.textContent = 'Teachers will use this name in lessons. It cannot be left empty.';
+      }
+      showOnboard('plan');
+    }
+    function saveProfileNickname() {
+      const inp = document.getElementById('profileNicknameInput');
+      const err = document.getElementById('profileNicknameError');
+      const raw = inp ? inp.value : '';
+      if (!isValidNickname(raw)) {
+        if (err) err.style.display = 'block';
+        if (inp) {
+          inp.style.borderColor = '#dc2626';
+          inp.focus();
+        }
+        showToast('Nickname cannot be empty');
+        return;
+      }
+      if (err) err.style.display = 'none';
+      if (inp) inp.style.borderColor = '#cbd5e1';
+      setStudentNickname(raw);
+      showToast('Nickname saved · teachers will use this name');
     }
     function afterTelegramSignup() {
       if (signupRole === 'parent') {
@@ -2517,9 +2634,16 @@
       selectedGrade = grade || selectedGrade;
       planType = plan || 'gold';
       seconds = planMinutes[planType] * 60;
+      // Nickname required: if user skipped somehow, block and send back
+      if (!isValidNickname(pendingNickname) && !isValidNickname(localStorage.getItem('aischool_nickname'))) {
+        showOnboard('nickname');
+        showToast('Please enter a nickname first');
+        return;
+      }
+      if (isValidNickname(pendingNickname)) setStudentNickname(pendingNickname);
       document.querySelectorAll('.onboard').forEach(el => el.classList.remove('active'));
       document.getElementById('appShell').classList.add('ready');
-      document.getElementById('headerName').textContent = 'Emma';
+      applyNicknameToUI(getStudentNickname());
       document.getElementById('headerMeta').textContent = 'Grade ' + (selectedGrade >= 12 ? '12+' : selectedGrade) + ' · ' +
         (planType === 'basic' ? 'Basic Plan' : planType === 'silver' ? 'Silver Plan' : 'Gold Plan');
       const badge = document.getElementById('headerBadge');
@@ -2537,7 +2661,7 @@
       updateTodaySnapshot();
       applyPlanAccess();
       expandTelegram();
-      showToast('Welcome! Grade ' + (selectedGrade >= 12 ? '12+' : selectedGrade) + ' · ' + planType);
+      showToast('Welcome, ' + getStudentNickname() + '! Grade ' + (selectedGrade >= 12 ? '12+' : selectedGrade) + ' · ' + planType);
       tryApiLoginAfterOnboard(planType);
     }
 
@@ -3872,12 +3996,18 @@
       if (typeof refreshStudentEnrollUI === 'function') refreshStudentEnrollUI();
       showToast('Prices saved · per-subject Pass updated (demo)');
     }
-    // Apply admin visibility on load
+    // Apply admin visibility + nickname on load
     document.addEventListener('DOMContentLoaded', function () {
       applySubjectVisibility();
       applyAdminPricesToUI();
+      applyNicknameToUI(getStudentNickname());
     });
-    setTimeout(function () { applySubjectVisibility(); applyAdminPricesToUI(); refreshStudentEnrollUI(); }, 100);
+    setTimeout(function () {
+      applySubjectVisibility();
+      applyAdminPricesToUI();
+      refreshStudentEnrollUI();
+      applyNicknameToUI(getStudentNickname());
+    }, 100);
 
     function pickAvatar(emoji, el) {
       const headerAv = document.getElementById('headerAvatar');
