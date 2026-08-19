@@ -356,6 +356,32 @@
       box-shadow: 0 0 0 2px #38bdf8;
       transition: box-shadow 0.2s, background 0.2s;
     }
+    /* Per-reply actions under AI text (Play + Copy) */
+    .msg-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .msg-actions .msg-act {
+      border: none;
+      background: #f1f5f9;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      line-height: 1.2;
+    }
+    .msg-actions .msg-act:active { background: #e2e8f0; }
+    .msg-actions .msg-act.play { background: #e0f2fe; color: #0369a1; }
+    .msg.ai.speaking .msg-actions .msg-act.play {
+      background: #0ea5e9;
+      color: white;
+    }
+    /* legacy single speak-btn (captions etc.) */
     .msg .speak-btn {
       margin-left: auto;
       border: none;
@@ -371,6 +397,68 @@
     .msg.ai.speaking .speak-btn {
       background: #0ea5e9;
       color: white;
+    }
+    /* Live lesson: teacher + Auto-play on one compact line */
+    .live-teacher-strip {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .live-teacher-strip .live-teacher-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .autoplay-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: #475569;
+      white-space: nowrap;
+    }
+    .autoplay-row .autoplay-label { font-weight: 600; }
+    .autoplay-row .autoplay-hint { display: none; } /* state lives on switch title */
+    .autoplay-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      border-radius: 11px;
+      border: none;
+      background: #cbd5e1;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .autoplay-switch.on { background: #0ea5e9; }
+    .autoplay-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      transition: transform 0.15s;
+    }
+    .autoplay-switch.on::after { transform: translateX(18px); }
+    .autoplay-switch:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
     .typing-indicator {
       align-self: flex-start; background: var(--tg-secondary);
@@ -781,7 +869,11 @@
       border: 2px solid #e2e8f0;
       box-shadow: 0 2px 8px rgba(148, 163, 184, 0.4);
     }
+    /* Season only on Profile — not in live lesson */
     .season-lesson-banner {
+      display: none !important;
+    }
+    .season-lesson-banner-legacy {
       display: none;
       align-items: center;
       gap: 8px;
@@ -795,9 +887,69 @@
       font-weight: 600;
       line-height: 1.35;
     }
-    .season-lesson-banner.show { display: flex; }
+    .season-lesson-banner.show { display: none !important; }
     .season-lesson-icon { font-size: 16px; flex-shrink: 0; }
     .season-lesson-text { flex: 1; min-width: 0; }
+    .mini-bar-chart {
+      margin: 10px 0 6px;
+      padding: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .mini-bar-chart .chart-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+    .mini-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .mini-bar-label {
+      width: 56px;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: #475569;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mini-bar-track {
+      flex: 1;
+      height: 14px;
+      background: #e2e8f0;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .mini-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #2563eb);
+      border-radius: 99px;
+      min-width: 2px;
+    }
+    .mini-bar-val {
+      width: 28px;
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 11px;
+      font-weight: 600;
+      color: #334155;
+    }
+    .msg.ai pre.ascii-grid {
+      margin: 8px 0;
+      padding: 8px 10px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-x: auto;
+      white-space: pre;
+      font-family: ui-monospace, monospace;
+    }
     /* no overlay on avatar icons */
     .season-chip.header-season { display: none !important; }
     .achieve-label {
@@ -1138,14 +1290,35 @@
           <button class="review-btn" onclick="event.stopPropagation(); startReview('AI and Robot','Calliope')">✨ Review</button>
         </div>
       </div>
-      <div class="subject-card" id="card-Languages" style="display:none" onclick="openLanguages()">
+      <div class="subject-card" id="card-Spelling-Bee" onclick="openChat('Spelling Bee','Ivy')">
         <span class="done-badge" style="display:none">Done today</span>
-        <div class="subject-icon">🌍</div>
-        <div class="subject-name">Languages</div>
-        <div class="subject-teacher">Léa · French · Spanish</div>
+        <div class="subject-icon">🐝</div>
+        <div class="subject-name">Spelling Bee</div>
+        <div class="subject-teacher">Ivy</div>
         <div class="card-actions">
-          <button class="recap-btn" onclick="event.stopPropagation(); viewRecap('Languages')">📄 See Recap</button>
-          <button class="review-btn" onclick="event.stopPropagation(); startReview('Languages','Léa')">✨ Review</button>
+          <button class="recap-btn" onclick="event.stopPropagation(); viewRecap('Spelling Bee')">📄 See Recap</button>
+          <button class="review-btn" onclick="event.stopPropagation(); startReview('Spelling Bee','Ivy')">✨ Review</button>
+          <button class="reflect-btn" onclick="event.stopPropagation(); showToast('Reflect · text only · 10 min shared pool (demo)')">💧 Reflect</button>
+        </div>
+      </div>
+      <div class="subject-card" id="card-French" onclick="startLanguage('French')">
+        <span class="done-badge" style="display:none">Done today</span>
+        <div class="subject-icon">🇫🇷</div>
+        <div class="subject-name">French</div>
+        <div class="subject-teacher">Étoile</div>
+        <div class="card-actions">
+          <button class="recap-btn" onclick="event.stopPropagation(); viewRecap('Languages · French')">📄 See Recap</button>
+          <button class="review-btn" onclick="event.stopPropagation(); startReview('Languages · French','Étoile')">✨ Review</button>
+        </div>
+      </div>
+      <div class="subject-card" id="card-Spanish" onclick="startLanguage('Spanish')">
+        <span class="done-badge" style="display:none">Done today</span>
+        <div class="subject-icon">🇪🇸</div>
+        <div class="subject-name">Spanish</div>
+        <div class="subject-teacher">Estrella</div>
+        <div class="card-actions">
+          <button class="recap-btn" onclick="event.stopPropagation(); viewRecap('Languages · Spanish')">📄 See Recap</button>
+          <button class="review-btn" onclick="event.stopPropagation(); startReview('Languages · Spanish','Estrella')">✨ Review</button>
         </div>
       </div>
     </div>
@@ -1159,11 +1332,7 @@
 
   <div class="screen" id="screen-chat">
     <div class="chat-container">
-      <!-- Only two tabs — no second subject profile strip -->
-      <div class="season-lesson-banner show" id="learnSeasonBanner" title="Active season (demo)">
-        <span class="season-lesson-icon">🌕</span>
-        <span class="season-lesson-text">Mid-Autumn season · short hello, then back to class</span>
-      </div>
+      <!-- Season only on Profile — not in live lesson -->
       <div class="learn-tabs">
         <button type="button" class="learn-tab" id="tabPlan" onclick="switchLearnTab('plan')">📋 Lesson plan</button>
         <button type="button" class="learn-tab on" id="tabLive" onclick="switchLearnTab('live')">💬 Live lesson</button>
@@ -1195,22 +1364,41 @@
 
       <!-- Pane: Live lesson (more room for chat) -->
       <div class="learn-pane on" id="paneLive">
+        <!-- Teacher name + Auto-play on one line -->
+        <div class="live-teacher-strip" id="liveTeacherStrip">
+          <div class="live-teacher-name" id="liveTeacherName">Alex · General Math</div>
+          <div class="autoplay-row">
+            <span class="autoplay-label">Auto-play</span>
+            <span class="autoplay-hint" id="autoplayHint"></span>
+            <button type="button" class="autoplay-switch" id="autoplaySwitch" onclick="toggleVoice()" title="Off — tap Play on a reply to hear" aria-label="Auto-play voice"></button>
+          </div>
+        </div>
         <div class="chat-messages" id="chatMessages">
           <div class="msg ai" id="msg-demo-1">
-            <div class="teacher-name">
-              <span>Alex · General Math</span>
-              <button type="button" class="speak-btn" onclick="speakMessage('msg-demo-1')">🎧</button>
+            <div class="teacher-name"><span>Alex · General Math</span></div>
+            <div class="msg-body">Hi Emma! Ready to continue with fractions? Last time you did well with common denominators.</div>
+            <div class="msg-actions">
+              <button type="button" class="msg-act play" onclick="speakMessage('msg-demo-1')">🔊 Play</button>
+              <button type="button" class="msg-act" onclick="copyMessage('msg-demo-1')">📋 Copy</button>
             </div>
-            Hi Emma! Ready to continue with fractions? Last time you did well with common denominators.
           </div>
           <div class="msg user">Yes, can we try some word problems?</div>
           <div class="msg ai" id="msg-demo-2">
-            <div class="teacher-name">
-              <span>Alex</span>
-              <button type="button" class="speak-btn" onclick="speakMessage('msg-demo-2')">🎧</button>
+            <div class="teacher-name"><span>Alex</span></div>
+            <div class="msg-body">Great idea! Here’s one:<br><br>
+            Lisa has 3/4 of a pizza. She gives 1/3 of what she has to her brother. How much pizza does Lisa have left?</div>
+            <div class="msg-actions">
+              <button type="button" class="msg-act play" onclick="speakMessage('msg-demo-2')">🔊 Play</button>
+              <button type="button" class="msg-act" onclick="copyMessage('msg-demo-2')">📋 Copy</button>
             </div>
-            Great idea! Here’s one:<br><br>
-            Lisa has 3/4 of a pizza. She gives 1/3 of what she has to her brother. How much pizza does Lisa have left?
+          </div>
+          <div class="msg ai" id="msg-demo-chart">
+            <div class="teacher-name"><span>Alex · demo chart</span></div>
+            <div class="msg-body" id="msg-demo-chart-body"></div>
+            <div class="msg-actions">
+              <button type="button" class="msg-act play" onclick="speakMessage('msg-demo-chart')">🔊 Play</button>
+              <button type="button" class="msg-act" onclick="copyMessage('msg-demo-chart')">📋 Copy</button>
+            </div>
           </div>
         </div>
 
@@ -1225,17 +1413,13 @@
             🎤 Live Talk on
           </div>
           <div class="chat-controls">
-            <button type="button" class="ctrl-btn" id="btnVoice" onclick="toggleVoice()" title="AI reads replies aloud">
-              <span class="icon" id="voiceIcon">🎧</span>
-              <span class="ctrl-name" id="voiceLabel">Voice</span>
-              <span class="ctrl-hint">Hear</span>
-            </button>
-                        <button type="button" class="ctrl-btn cam-ctrl" id="camBtn" onclick="openCameraCapture()" title="Take photo of question (Silver/Gold, max 10/lesson)">
+            <!-- Teacher voice is Auto-play under teacher name + Play under each reply (no global Voice btn) -->
+            <button type="button" class="ctrl-btn cam-ctrl" id="camBtn" onclick="openCameraCapture()" title="Take photo of question (Silver/Gold, max 10/lesson)">
               <span class="icon">📷</span>
               <span class="ctrl-name">Photo</span>
               <span class="ctrl-hint" id="camHint">Pic</span>
             </button>
-<button type="button" class="ctrl-btn live-locked" id="btnLive" onclick="toggleLiveTalk()" title="Live Talk call — coming when S2S is ready">
+            <button type="button" class="ctrl-btn live-locked" id="btnLive" onclick="toggleLiveTalk()" title="Live Talk call — coming when S2S is ready">
               <span class="icon">📞</span>
               <span class="ctrl-name" id="liveLabel">Call</span>
               <span class="ctrl-hint">Soon</span>
@@ -1386,6 +1570,7 @@
           <button type="button" class="tier-pick" onclick="showToast('Subject Pass: Exam Preparation · $2.50/mo (demo)')">Exam Prep</button>
           <button type="button" class="tier-pick on" onclick="showToast('Already have Coding Pass (demo)')">Coding ✓</button>
           <button type="button" class="tier-pick" onclick="showToast('Subject Pass: AI & Robot · ' + formatUsd(passPrice('AI and Robot')) + '/mo (demo)')">AI & Robot</button>
+          <button type="button" class="tier-pick" onclick="showToast('Subject Pass: Spelling Bee · ' + formatUsd(passPrice('Spelling Bee')) + '/mo (demo)')">Spelling Bee</button>
           <button type="button" class="tier-pick" id="passPickLanguages" style="display:none" onclick="showToast('Subject Pass: Languages · ' + formatUsd(passPrice('Languages')) + '/mo (demo)')">Languages</button>
         </div>
       </div>
@@ -1460,6 +1645,28 @@
         <span class="achieve-badge gold" title="Passed Grade 6">G6<br>Passed</span>
         <span class="achieve-badge silver" title="Passed Grade 5">G5<br>Passed</span>
         <span class="achieve-badge silver" title="Passed Grade 4">G4<br>Passed</span>
+      </div>
+
+      <!-- Teaching style: Focus | Relax (locked) -->
+      <div class="card" id="teachingStyleCard" style="margin-top:12px;text-align:left">
+        <strong style="font-size:14px">Teaching style</strong>
+        <p style="font-size:11px;color:var(--tg-hint);margin:6px 0 10px;line-height:1.4">Teacher follows this in every live lesson. Change anytime · applies to the next lesson.</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:12px;cursor:pointer;background:#fff" id="styleFocusLabel">
+            <input type="radio" name="teachingStyle" value="focus" checked onchange="setTeachingStyle('focus')" style="margin-top:3px">
+            <span>
+              <span style="font-size:13px;font-weight:700;display:block">Focus</span>
+              <span style="font-size:11px;color:var(--tg-hint);line-height:1.35">Stay on the lesson plan</span>
+            </span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:12px;cursor:pointer;background:#fff" id="styleRelaxLabel">
+            <input type="radio" name="teachingStyle" value="relax" onchange="setTeachingStyle('relax')" style="margin-top:3px">
+            <span>
+              <span style="font-size:13px;font-weight:700;display:block">Relax</span>
+              <span style="font-size:11px;color:var(--tg-hint);line-height:1.35">Finish practice first, then more open</span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div class="card" id="liveTalkProfileCard" style="margin-top:12px">
@@ -2408,6 +2615,7 @@
       if (subject.indexOf('Exam Preparation') === 0 || subject.indexOf('IELTS') === 0 || subject.indexOf('SAT') === 0 || subject.indexOf('TOEFL') === 0) return !!subjectPasses['Exam Preparation'];
       if (subject.indexOf('Coding') === 0 || subject.indexOf('Basic Coding') === 0) return !!subjectPasses['Coding'];
       if (subject.indexOf('AI and Robot') === 0 || subject.indexOf('AI &') === 0) return !!subjectPasses['AI and Robot'];
+      if (subject.indexOf('Spelling Bee') === 0) return !!subjectPasses['Spelling Bee'];
       return false;
     }
 
@@ -2419,7 +2627,8 @@
         { id: 'card-Special-Math', subject: 'Special Math' },
         { id: 'card-Exam-Preparation', subject: 'Exam Preparation' },
         { id: 'card-Coding', subject: 'Coding' },
-        { id: 'card-AI-and-Robot', subject: 'AI and Robot' }
+        { id: 'card-AI-and-Robot', subject: 'AI and Robot' },
+        { id: 'card-Spelling-Bee', subject: 'Spelling Bee' }
       ];
       cards.forEach(c => {
         const el = document.getElementById(c.id);
@@ -2452,7 +2661,6 @@
       });
       // Live Talk = separate prepaid pack (not tier). Button always visible.
       const btnLive = document.getElementById('btnLive');
-      const btnVoice = document.getElementById('btnVoice');
       if (btnLive) {
         btnLive.onclick = function() { toggleLiveTalk(); };
         const liveHint = btnLive.querySelector('.ctrl-hint');
@@ -2473,40 +2681,79 @@
           btnLive.title = liveTalkMinutes > 0 ? 'Start Live Talk call' : 'Buy Live Talk pack to call';
         }
       }
-      if (btnVoice) {
-        // Coding / AI & Robot: text-first — no auto teacher voice
-        if (isTextFirstSubject(typeof currentSubject !== 'undefined' ? currentSubject : '')) {
-          voiceOn = false;
-          btnVoice.disabled = true;
-          btnVoice.style.opacity = '0.4';
-          btnVoice.classList.remove('voice-on', 'voice-browser', 'voice-openai');
-          btnVoice.title = 'Text-first subject — teacher replies stay as text (better for code)';
-          const hint = btnVoice.querySelector('.ctrl-hint');
-          if (hint) hint.textContent = 'Text';
-          const lab = document.getElementById('voiceLabel');
-          if (lab) lab.textContent = 'Voice';
-        } else {
-          btnVoice.disabled = false;
-          btnVoice.style.opacity = '1';
-          btnVoice.classList.remove('voice-browser', 'voice-openai');
-          const isBrowser = (planType === 'basic');
-          btnVoice.classList.add(isBrowser ? 'voice-browser' : 'voice-openai');
-          const icon = document.getElementById('voiceIcon');
-          const hint = btnVoice.querySelector('.ctrl-hint');
-          if (isBrowser) {
-            if (icon) icon.textContent = '🔈';
-            if (hint) hint.textContent = voiceOn ? 'Device' : 'Off';
-            btnVoice.title = 'Device voice (free) — phone reads the teacher reply';
-          } else {
-            if (icon) icon.textContent = '🎧';
-            if (hint) hint.textContent = voiceOn ? 'AI' : 'Off';
-            btnVoice.title = 'AI Voice — OpenAI when available; falls back to device voice if used up';
-          }
-          btnVoice.classList.toggle('voice-on', !!voiceOn);
-        }
-      }
+      // Auto-play under teacher name (no global Voice button)
+      try { syncAutoplayUi(); } catch (e) {}
       refreshLiveTalkProfile();
       try { updateCamBtnForPlan(); } catch (e) {}
+    }
+
+    function syncAutoplayUi() {
+      const sw = document.getElementById('autoplaySwitch');
+      const hint = document.getElementById('autoplayHint');
+      const textFirst = isTextFirstSubject(typeof currentSubject !== 'undefined' ? currentSubject : '');
+      if (textFirst) {
+        voiceOn = false;
+        if (sw) {
+          sw.classList.remove('on');
+          sw.disabled = true;
+          sw.title = 'Text-first subject — teacher replies stay as text (better for code)';
+        }
+        if (hint) hint.textContent = 'Text-only for this subject';
+        return;
+      }
+      if (sw) {
+        sw.disabled = false;
+        sw.classList.toggle('on', !!voiceOn);
+        sw.title = voiceOn
+          ? 'Auto-play on — new AI replies speak automatically'
+          : 'Auto-play off — tap Play under a reply to hear it';
+      }
+      if (hint) {
+        hint.textContent = voiceOn ? 'On · new replies speak' : 'Off · tap Play on a reply';
+      }
+    }
+
+    /** Build AI bubble: teacher name + body + Play/Copy (no global headphones) */
+    function buildAiMessageHtml(teacher, msgId, bodyHtml) {
+      return (
+        '<div class="teacher-name"><span>' + teacher + '</span></div>' +
+        '<div class="msg-body">' + bodyHtml + '</div>' +
+        '<div class="msg-actions">' +
+          '<button type="button" class="msg-act play" onclick="speakMessage(\'' + msgId + '\')">🔊 Play</button>' +
+          '<button type="button" class="msg-act" onclick="copyMessage(\'' + msgId + '\')">📋 Copy</button>' +
+        '</div>'
+      );
+    }
+
+    function copyMessage(msgId) {
+      const el = document.getElementById(msgId);
+      if (!el) return;
+      const body = el.querySelector('.msg-body') || el.querySelector('.caption-body');
+      const text = body ? (body.innerText || body.textContent || '') : (el.innerText || '');
+      const clean = String(text || '').trim();
+      if (!clean) {
+        showToast('Nothing to copy');
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(clean).then(function () {
+          showToast('Copied');
+        }).catch(function () {
+          showToast('Copy failed');
+        });
+      } else {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = clean;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast('Copied');
+        } catch (e) {
+          showToast('Copy failed');
+        }
+      }
     }
 
     function cardId(subject) {
@@ -2994,6 +3241,7 @@
       'Exam Preparation': 3.5,
       'Coding': 3.0,
       'AI and Robot': 3.5,
+      'Spelling Bee': 2.5,
       'Languages': 3.0,
     };
     function passPrice(subjectName) {
@@ -3015,8 +3263,9 @@
       { name: 'Exam Preparation', teacher: 'Sophia' },
       { name: 'Coding', teacher: 'Codey' },
       { name: 'AI and Robot', teacher: 'Calliope' },
+      { name: 'Spelling Bee', teacher: 'Ivy' },
       { name: 'French', teacher: 'Étoile' },
-        { name: 'Spanish', teacher: 'Estrella' },
+      { name: 'Spanish', teacher: 'Estrella' },
     ];
     let currentChildKey = null;
 
@@ -3474,23 +3723,24 @@
       { key: 'Exam Preparation', card: 'card-Exam-Preparation' },
       { key: 'Coding', card: 'card-Coding' },
       { key: 'AI and Robot', card: 'card-AI-and-Robot' },
+      { key: 'Spelling Bee', card: 'card-Spelling-Bee' },
       { key: 'French', card: 'card-French' },
       { key: 'Spanish', card: 'card-Spanish' },
     ];
     function loadAdminConfig() {
       try {
         var cfg = JSON.parse(localStorage.getItem('aischool_admin') || '{}');
-        // French & Spanish cards are visible; Basic may grey until unlock
-        if (!cfg.hiddenSubjects) cfg.hiddenSubjects = ['Languages'];
-        else if (cfg.hiddenSubjects.indexOf('Languages') < 0 && !cfg.languagesUnlocked) {
-          // keep hidden unless Admin explicitly showed it (languagesUnlocked set on first Show)
-          if (!cfg._languagesDecisionDone) {
-            cfg.hiddenSubjects.push('Languages');
-          }
-        }
+        // French & Spanish are visible by default (Silver/Gold full; Basic may grey until unlock).
+        // Admin can still hide either card. Strip legacy "Languages" group hide.
+        if (!cfg.hiddenSubjects) cfg.hiddenSubjects = [];
+        cfg.hiddenSubjects = (cfg.hiddenSubjects || []).filter(function (x) {
+          return x !== 'Languages';
+        });
+        cfg.languagesUnlocked = true;
+        cfg._languagesDecisionDone = true;
         return cfg;
       } catch (e) {
-        return { hiddenSubjects: ['Languages'] };
+        return { hiddenSubjects: [], languagesUnlocked: true, _languagesDecisionDone: true };
       }
     }
     function saveAdminConfig(cfg) {
@@ -3630,6 +3880,32 @@
       if (el) el.classList.add('on');
       showToast('Avatar updated ' + emoji);
     }
+    // Teaching style: focus | relax (Profile) — applies next lesson
+    function getTeachingStyle() {
+      try {
+        var s = localStorage.getItem('aischool_teaching_style');
+        return (s === 'relax') ? 'relax' : 'focus';
+      } catch (e) { return 'focus'; }
+    }
+    function setTeachingStyle(style) {
+      style = (style === 'relax') ? 'relax' : 'focus';
+      try { localStorage.setItem('aischool_teaching_style', style); } catch (e) {}
+      var focusLab = document.getElementById('styleFocusLabel');
+      var relaxLab = document.getElementById('styleRelaxLabel');
+      if (focusLab) focusLab.style.borderColor = style === 'focus' ? '#0ea5e9' : '#e2e8f0';
+      if (relaxLab) relaxLab.style.borderColor = style === 'relax' ? '#0ea5e9' : '#e2e8f0';
+      showToast(style === 'relax'
+        ? 'Relax · finish practice first, then more open'
+        : 'Focus · stay on the lesson');
+    }
+    (function initTeachingStyleUI() {
+      var style = getTeachingStyle();
+      var radios = document.querySelectorAll('input[name="teachingStyle"]');
+      radios.forEach(function (r) {
+        r.checked = (r.value === style);
+      });
+      setTeachingStyle(style);
+    })();
     function setLiveImmersive(on) {
       document.body.classList.toggle('live-immersive', !!on);
       try { expandTelegram(); } catch (e) {}
@@ -3859,6 +4135,7 @@
         ['Exam Preparation', 'card-Exam-Preparation'],
         ['Coding', 'card-Coding'],
         ['AI and Robot', 'card-AI-and-Robot'],
+        ['Spelling Bee', 'card-Spelling-Bee'],
         ['French', 'card-French'],
         ['Spanish', 'card-Spanish']
       ];
@@ -3947,6 +4224,9 @@
       showScreen('chat', null, { push: true });
       const pt = document.getElementById('lessonPlanTitle');
       if (pt) pt.textContent = '📋 Lesson Plan · ' + subject;
+      const ltn = document.getElementById('liveTeacherName');
+      if (ltn) ltn.textContent = teacher + ' · ' + subject;
+      try { syncAutoplayUi(); } catch (e) {}
       switchLearnTab('live');
       setHeaderCollapsed(true);
       document.getElementById('continueChip').style.display = (subject === 'General Math') ? 'inline-block' : 'none';
@@ -3976,8 +4256,9 @@
               const el = document.createElement('div');
               el.className = msg.role === 'user' ? 'msg user' : 'msg ai';
               if (msg.role === 'assistant') {
-                var body = formatAiReply(msg.content || '');
-                el.innerHTML = '<div class="teacher-name"><span>' + currentTeacher + '</span></div>' + body;
+                var mid = 'msg-hist-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+                el.id = mid;
+                el.innerHTML = buildAiMessageHtml(currentTeacher, mid, formatAiReply(msg.content || ''));
               } else {
                 el.textContent = msg.content || '';
               }
@@ -3995,25 +4276,71 @@
     function toggleLessonPlan() {
       switchLearnTab('plan');
     }
+    function renderBarChartHtml(data) {
+      try {
+        if (!data || data.type !== 'bar') return '';
+        var labels = data.labels || [];
+        var values = data.values || [];
+        if (!labels.length || labels.length !== values.length) return '';
+        if (labels.length > 6) {
+          labels = labels.slice(0, 6);
+          values = values.slice(0, 6);
+        }
+        var max = 0;
+        for (var i = 0; i < values.length; i++) {
+          var n = Number(values[i]);
+          if (!(n >= 0)) n = 0;
+          values[i] = n;
+          if (n > max) max = n;
+        }
+        if (max <= 0) max = 1;
+        var title = String(data.title || 'Chart').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var html = '<div class="mini-bar-chart"><div class="chart-title">' + title + '</div>';
+        for (var j = 0; j < labels.length; j++) {
+          var lab = String(labels[j]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          var pct = Math.round((values[j] / max) * 100);
+          html += '<div class="mini-bar-row"><span class="mini-bar-label">' + lab +
+            '</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:' + pct +
+            '%"></div></div><span class="mini-bar-val">' + values[j] + '</span></div>';
+        }
+        html += '</div>';
+        return html;
+      } catch (e) {
+        return '';
+      }
+    }
+
     function formatAiReply(text) {
       if (!text) return '';
       var s = String(text);
+      var chartHtml = '';
+      // Optional ```chart {json} ``` block → simple CSS bar chart
+      s = s.replace(/```chart\s*([\s\S]*?)```/gi, function (_, body) {
+        try {
+          var json = String(body).trim();
+          var data = JSON.parse(json);
+          chartHtml += renderBarChartHtml(data);
+        } catch (err) {
+          chartHtml += '<div class="mini-bar-chart" style="color:#64748b">Chart data could not be shown — use the table in the text.</div>';
+        }
+        return '\n';
+      });
       // Fix missing spaces after punctuation (common LLM glitch)
       s = s.replace(/([.!?:,;])([A-Za-z0-9])/g, '$1 $2');
       s = s.replace(/([a-z])([A-Z])/g, '$1 $2');
       s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       s = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      // Always improve structure for phone reading
+      // Keep ASCII-looking blocks a bit more readable
       s = s.replace(/\s+(?=\d+[\)\.]\s+)/g, '\n');
       s = s.replace(/\s+(?=Step\s+\d+)/gi, '\n');
       s = s.replace(/\s+[-•]\s+/g, '\n• ');
-      // Break after each sentence
       s = s.replace(/([.!?])\s+/g, '$1\n\n');
       s = s.replace(/\n{3,}/g, '\n\n');
       s = s.replace(/\n/g, '<br>');
       s = s.replace(/(<br>){3,}/g, '<br><br>');
-      return s;
+      return s + chartHtml;
     }
+
 
 
     /**
@@ -4044,7 +4371,11 @@
       const tag = isUser ? 'Live Talk · You' : 'Live Talk · Teacher';
       let inner = '<div class="caption-tag">' + tag + '</div><div class="caption-body"></div>';
       if (!isUser) {
-        inner += '<button type="button" class="speak-btn" onclick="speakMessage(\'' + msgId + '\')" title="Play voice">🎧</button>';
+        inner +=
+          '<div class="msg-actions">' +
+            '<button type="button" class="msg-act play" onclick="speakMessage(\'' + msgId + '\')">🔊 Play</button>' +
+            '<button type="button" class="msg-act" onclick="copyMessage(\'' + msgId + '\')">📋 Copy</button>' +
+          '</div>';
       }
       el.innerHTML = inner;
       el.querySelector('.caption-body').textContent = text;
@@ -4420,11 +4751,7 @@
           aiMsg.className = 'msg ai';
           aiMsg.id = msgId;
           const reply = (data.assistant && data.assistant.content) || '(no reply)';
-          aiMsg.innerHTML =
-            '<div class="teacher-name"><span>' + currentTeacher +
-            (voiceOn ? ' <span class="voice-badge">🎧 Voice</span>' : '') +
-            '</span><button type="button" class="speak-btn" onclick="speakMessage(\'' + msgId + '\')">🎧</button></div>' +
-            formatAiReply(reply);
+          aiMsg.innerHTML = buildAiMessageHtml(currentTeacher, msgId, formatAiReply(reply));
           box.appendChild(aiMsg);
           box.scrollTop = box.scrollHeight;
           if (voiceOn) speakMessage(msgId);
@@ -4443,10 +4770,7 @@
         aiMsg.className = 'msg ai';
         aiMsg.id = msgId;
         let reply = 'Nice try! Let’s walk through it step by step.<br><br>1. Lisa starts with 3/4.<br>2. She gives away 1/3 of that amount → (1/3)×(3/4) = 1/4.<br>3. Left = 3/4 − 1/4 = 1/2.<br><br>So Lisa has <strong>1/2</strong> of the pizza left. Want another one?';
-        aiMsg.innerHTML =
-          '<div class="teacher-name"><span>' + currentTeacher +
-          (voiceOn ? ' <span class="voice-badge">🎧 Voice</span>' : '') +
-          '</span><button type="button" class="speak-btn" onclick="speakMessage(\'' + msgId + '\')">🎧</button></div>' + reply;
+        aiMsg.innerHTML = buildAiMessageHtml(currentTeacher, msgId, reply);
         box.appendChild(aiMsg);
         box.scrollTop = box.scrollHeight;
         if (voiceOn) speakMessage(msgId);
@@ -4540,10 +4864,10 @@
 
     async function speakMessage(msgId) {
       if (isPaused) { showToast('Resume the lesson to hear voice'); return; }
-      // Tap headphones again while playing = mute
+      // Tap Play again while playing = stop
       if (currentSpeakMsgId === msgId) {
         stopAllSpeech();
-        showToast('Voice muted');
+        showToast('Stopped');
         return;
       }
       stopAllSpeech();
@@ -4551,21 +4875,28 @@
       if (!el) return;
       currentSpeakMsgId = msgId;
       el.classList.add('speaking');
-      const btn = el.querySelector('.speak-btn');
+      const btn = el.querySelector('.msg-act.play') || el.querySelector('.speak-btn');
       if (btn) {
-        btn.textContent = '🔇';
-        btn.title = 'Mute / stop voice';
+        btn.textContent = '🔇 Stop';
+        btn.title = 'Stop voice';
       }
       let raw = '';
       try {
-        const clone = el.cloneNode(true);
-        const tn = clone.querySelector('.teacher-name');
-        if (tn) tn.remove();
-        const sb = clone.querySelector('.speak-btn');
-        if (sb) sb.remove();
-        const vb = clone.querySelector('.voice-badge');
-        if (vb) vb.remove();
-        raw = (clone.innerText || clone.textContent || '').trim();
+        const body = el.querySelector('.msg-body') || el.querySelector('.caption-body');
+        if (body) {
+          raw = (body.innerText || body.textContent || '').trim();
+        } else {
+          const clone = el.cloneNode(true);
+          const tn = clone.querySelector('.teacher-name');
+          if (tn) tn.remove();
+          const ma = clone.querySelector('.msg-actions');
+          if (ma) ma.remove();
+          const sb = clone.querySelector('.speak-btn');
+          if (sb) sb.remove();
+          const vb = clone.querySelector('.voice-badge');
+          if (vb) vb.remove();
+          raw = (clone.innerText || clone.textContent || '').trim();
+        }
       } catch (e) {
         raw = (el.innerText || el.textContent || '').trim();
       }
@@ -4573,11 +4904,14 @@
       const clearSpeaking = function () {
         if (currentSpeakMsgId === msgId) currentSpeakMsgId = null;
         el.classList.remove('speaking');
-        if (btn) { btn.textContent = '🎧'; btn.title = 'Play voice'; }
+        if (btn) {
+          btn.textContent = btn.classList.contains('msg-act') ? '🔊 Play' : '🎧';
+          btn.title = 'Play voice';
+        }
       };
       if (openaiTtsOk && Api.isConfigured() && Api.accessToken && raw && planType !== 'basic') {
         try {
-          showToast('🎧 AI Voice — tap 🔇 to mute');
+          showToast('Playing — tap Stop to mute');
           const blob = await Api.ttsSpeak(raw.slice(0, 2000));
           if (!blob || !blob.size) throw new Error('Empty audio');
           if (currentSpeakMsgId !== msgId) return;
@@ -4608,28 +4942,17 @@
     function toggleVoice() {
       if (isTextFirstSubject(typeof currentSubject !== 'undefined' ? currentSubject : '')) {
         voiceOn = false;
+        syncAutoplayUi();
         showToast('Coding / AI & Robot use text replies — easier to read code and steps');
-        try { updateSubjectLocks(); } catch (e) {}
         return;
       }
       voiceOn = !voiceOn;
-      const wrap = document.getElementById('btnVoice');
-      if (wrap) wrap.classList.toggle('voice-on', voiceOn);
-      const lab = document.getElementById('voiceLabel');
-      if (lab) lab.textContent = 'Voice';
-      const hint = wrap && wrap.querySelector('.ctrl-hint');
-      const isBrowser = (planType === 'basic');
-      if (hint) {
-        if (isBrowser) hint.textContent = voiceOn ? 'Device' : 'Off';
-        else hint.textContent = voiceOn ? 'AI' : 'Off';
-      }
+      syncAutoplayUi();
       if (!voiceOn) {
         stopAllSpeech();
-        showToast('Voice OFF — muted · text only');
+        showToast('Auto-play off — text only · tap Play on a reply to hear it');
       } else {
-        showToast(isBrowser
-          ? 'Device voice ON — tap 🔇 on a message to mute'
-          : 'AI Voice ON — tap 🔇 on a message to mute');
+        showToast('Auto-play on — new AI replies will speak (uses voice only when you listen)');
       }
     }
 
@@ -4947,6 +5270,18 @@
 
 
     // Demo: Ready-for-grade badge → confirm leave current grade
+    (function initDemoChart() {
+      var el = document.getElementById('msg-demo-chart-body');
+      if (!el) return;
+      setTimeout(function () {
+        if (typeof formatAiReply === 'function') {
+          el.innerHTML = formatAiReply(
+            'Here is a simple bar chart of votes:\n\n```chart\n{"type":"bar","title":"Class votes","labels":["Red","Blue","Green"],"values":[4,7,2]}\n```\n\nWhich color has the most votes?'
+          );
+        }
+      }, 0);
+    })();
+
     function confirmGradeUpgrade(nextGrade) {
       const cur = selectedGrade || 7;
       const nextLabel = nextGrade >= 12 ? '12+' : String(nextGrade);
@@ -5153,10 +5488,7 @@
           return;
         }
         voiceOn = true;
-        const wrap = document.getElementById('btnVoice');
-        if (wrap) wrap.classList.add('voice-on');
-        const lab = document.getElementById('voiceLabel');
-        if (lab) lab.textContent = 'Voice';
+        try { syncAutoplayUi(); } catch (e) {}
         startLiveTalkTicker();
         const sessLeft = Math.ceil((LIVE_TALK_SESSION_CAP_MIN * 60 - liveTalkSessionUsedSec) / 60);
         showToast('Live Talk on · pack ' + Math.ceil(liveTalkMinutes) + 'm · max ' + sessLeft + 'm this session');
@@ -5231,13 +5563,11 @@
       isPaused = false;
       liveTalkOn = false;
       voiceOn = false;
+      try { stopAllSpeech(); } catch (e) {}
       document.getElementById('btnLive').classList.remove('active');
-      const voiceWrap = document.getElementById('btnVoice');
-      if (voiceWrap) voiceWrap.classList.remove('voice-on');
+      try { syncAutoplayUi(); } catch (e) {}
       const liveLab = document.getElementById('liveLabel');
-      if (liveLab) liveLab.textContent = 'Live';
-      const voiceLab = document.getElementById('voiceLabel');
-      if (voiceLab) voiceLab.textContent = 'Voice';
+      if (liveLab) liveLab.textContent = 'Call';
       const liveBanner = document.getElementById('liveBanner');
       const pauseBanner = document.getElementById('pauseBanner');
       if (liveBanner) liveBanner.style.display = 'none';

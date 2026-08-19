@@ -25,6 +25,16 @@ from prompts import parse_recap_llm_output, recap_system_prompt, recap_user_payl
 
 PHNOM_PENH = ZoneInfo("Asia/Phnom_Penh")
 
+
+def _season_note_safe() -> str:
+    try:
+        from season_calendar import season_note_for_today
+
+        return season_note_for_today() or ""
+    except Exception:
+        return ""
+
+
 FREE_CORES = {"general_math", "general_english"}
 PLAN_SESSIONS = {"basic": 1, "silver": 3, "gold": 4}
 PLAN_MINUTES = {"basic": 25, "silver": 45, "gold": 60}
@@ -36,6 +46,8 @@ TEACHERS = {
     "exam_preparation": "sophia",
     "coding": "codey",
     "ai_and_robot": "calliope",
+    "spelling_bee": "ivy",
+    # languages map at session start if needed: french → etoile, spanish → estrella
 }
 
 
@@ -1120,6 +1132,20 @@ class StudyService:
         )
         self.store.add_message(user_msg)
 
+        # Student grade for grade-fit teaching (from DB when available)
+        grade_val = None
+        try:
+            from repositories import get_repos
+
+            _ur, _sess = get_repos()
+            st_row = _ur.get_student(student_id) if _ur else None
+            if st_row and st_row.get("grade") is not None:
+                grade_val = int(st_row["grade"])
+                if grade_val < 4 or grade_val > 12:
+                    grade_val = None
+        except Exception:
+            grade_val = None
+
         # Build short context from this session only
         history = self.store.list_messages(session_id)
         llm_messages = [
@@ -1129,13 +1155,20 @@ class StudyService:
                     teacher_key=session.teacher_key,
                     subject_key=session.subject_key,
                     subject_track=session.subject_track,
-                    grade=None,
+                    grade=grade_val,
                     plan_tier=session.plan_tier_snapshot,
                     mode=session.mode,
                     prior_recap=(
                         getattr(session, "_prior_recap", None)
                         or self.build_prior_recap_context(session.student_id, session.subject_key)
                     ),
+                    seconds_remaining=max(
+                        0,
+                        int(session.duration_limit_sec or 0)
+                        - int(max(0, time.time() - float(session.started_at or time.time()))),
+                    ),
+                    duration_limit_sec=int(session.duration_limit_sec or 0),
+                    season_note=_season_note_safe(),
                 ),
             }
         ]

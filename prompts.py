@@ -17,6 +17,7 @@ TEACHER_NAMES = {
     "calliope": "Calliope",
     "etoile": "Étoile",
     "estrella": "Estrella",
+    "ivy": "Ivy",
 }
 
 SUBJECT_LABELS = {
@@ -28,7 +29,623 @@ SUBJECT_LABELS = {
     "coding": "Coding",
     "ai_and_robot": "AI & Robot",
     "languages": "Languages",
+    "spelling_bee": "Spelling Bee",
 }
+
+
+# ---------------------------------------------------------------------------
+# Theme banks (A) — one list per Special Math track / Advanced English level.
+# Same themes across grades; grade band only scales difficulty / skips unfit items.
+# Not a 40-lesson map. AI picks using last recap Next + anti-repeat.
+# ---------------------------------------------------------------------------
+
+# grades: None = all; or (min_grade, max_grade) inclusive soft range
+SPECIAL_MATH_THEMES: dict[str, list[dict]] = {
+    "Logic Puzzle": [
+        {"theme": "Who/what is true — simple elimination", "grades": (4, 12)},
+        {"theme": "Pattern in a short sequence of shapes or numbers", "grades": (4, 10)},
+        {"theme": "Grid / table logic with 2–3 clues", "grades": (5, 12)},
+        {"theme": "True or false statements — find the odd one", "grades": (4, 9)},
+        {"theme": "Order events or people with ranking clues", "grades": (6, 12)},
+        {"theme": "Short riddle with one clear math or logic step", "grades": (4, 8)},
+    ],
+    "Math Kangaroo style": [
+        {"theme": "Clever counting and enumeration", "grades": (4, 10)},
+        {"theme": "Number patterns and simple sequences", "grades": (4, 11)},
+        {"theme": "Picture / shape puzzles (count, symmetry)", "grades": (4, 8)},
+        {"theme": "Fair share, fractions in puzzle form", "grades": (5, 11)},
+        {"theme": "Short multi-choice style reasoning (one best answer)", "grades": (4, 12)},
+        {"theme": "Time, calendar, or clock puzzle", "grades": (4, 9)},
+        {"theme": "Area / perimeter with a twist (not plain textbook)", "grades": (6, 12)},
+    ],
+    "SASMO style": [
+        {"theme": "Multi-step word problem with a diagram hint", "grades": (5, 12)},
+        {"theme": "Ratios and fair comparison", "grades": (6, 12)},
+        {"theme": "Number patterns leading to a rule", "grades": (5, 12)},
+        {"theme": "Geometry puzzle (angles / simple area)", "grades": (6, 12)},
+        {"theme": "Logic + arithmetic mixed in one story", "grades": (5, 11)},
+        {"theme": "Working backwards from the answer", "grades": (7, 12)},
+        {"theme": "Speed / distance / rate in puzzle form", "grades": (7, 12)},
+    ],
+    "Suken style": [
+        {"theme": "Clean calculation with a smart shortcut", "grades": (4, 12)},
+        {"theme": "Number sense — estimate then check", "grades": (4, 10)},
+        {"theme": "Fractions and decimals in contest-style items", "grades": (5, 12)},
+        {"theme": "Order of operations with a twist", "grades": (5, 11)},
+        {"theme": "Simple algebra thinking (find the missing number)", "grades": (6, 12)},
+        {"theme": "Units and measurement puzzles", "grades": (4, 9)},
+    ],
+    "Olympiad style": [
+        {"theme": "Prove or explain why — short reasoning (not formal proof for young grades)", "grades": (8, 12)},
+        {"theme": "Invariant or “what never changes” idea (simple version)", "grades": (9, 12)},
+        {"theme": "Harder multi-step contest word problem", "grades": (7, 12)},
+        {"theme": "Geometry with one insight (not many theorems)", "grades": (8, 12)},
+        {"theme": "Counting with structure (not list everything)", "grades": (7, 12)},
+        {"theme": "Find all possibilities that work", "grades": (8, 12)},
+        # Softer entry for mid grades on this track
+        {"theme": "Challenge puzzle — one hard step with scaffolding", "grades": (6, 9)},
+    ],
+}
+
+ADVANCED_ENGLISH_THEMES: dict[str, list[dict]] = {
+    "Explorer": [
+        {"theme": "Rich vocabulary inside a short story", "grades": (4, 6)},
+        {"theme": "Picture or situation → short spoken/written lines", "grades": (4, 6)},
+        {"theme": "Simple real conversation (greet, ask, answer)", "grades": (4, 6)},
+        {"theme": "Describe a person, place, or day in 3–5 sentences", "grades": (4, 6)},
+        {"theme": "Listen/read a tiny dialogue and reply", "grades": (4, 6)},
+    ],
+    "Trailblazer": [
+        {"theme": "Grammar in short dialogues (not isolated drills)", "grades": (5, 8)},
+        {"theme": "Short reading passage + 2 clear questions", "grades": (5, 8)},
+        {"theme": "Vocabulary in a mini-story", "grades": (5, 8)},
+        {"theme": "Speak/write 4–6 sentences on a familiar topic", "grades": (5, 8)},
+        {"theme": "Fix common mistakes from recent weak topics", "grades": (5, 8)},
+        {"theme": "Opinion in simple sentences (I think… because…)", "grades": (6, 8)},
+    ],
+    "Pathfinder": [
+        {"theme": "Paragraph writing with a clear main idea", "grades": (7, 10)},
+        {"theme": "Short debate turn — agree/disagree with a reason", "grades": (7, 10)},
+        {"theme": "Reading for detail and main idea", "grades": (7, 10)},
+        {"theme": "Real-world English (email, notice, request — school-safe)", "grades": (7, 10)},
+        {"theme": "Linking ideas (because, however, for example)", "grades": (7, 10)},
+        {"theme": "Story or explanation with beginning–middle–end", "grades": (7, 10)},
+    ],
+    "Summit": [
+        {"theme": "Longer reading + structured response", "grades": (9, 12)},
+        {"theme": "Essay outline then one strong paragraph", "grades": (9, 12)},
+        {"theme": "Register — formal vs informal (school-safe)", "grades": (9, 12)},
+        {"theme": "Summarise a short text in your own words", "grades": (9, 12)},
+        {"theme": "Argue one side with two supporting points", "grades": (9, 12)},
+        {"theme": "Edit for clarity and stronger verbs", "grades": (9, 12)},
+    ],
+    "Apex": [
+        {"theme": "Complex idea — explain and evaluate briefly", "grades": (11, 12)},
+        {"theme": "Synthesise two short sources or viewpoints", "grades": (11, 12)},
+        {"theme": "Fluent extended reply (opinion + nuance)", "grades": (11, 12)},
+        {"theme": "Precision: hedge, qualify, define a term simply", "grades": (11, 12)},
+        {"theme": "Structured essay section with clear topic sentence", "grades": (11, 12)},
+        {"theme": "Critique a weak argument and improve it", "grades": (11, 12)},
+    ],
+}
+
+CODING_THEMES: dict[str, list[dict]] = {
+    "Basic Coding": [
+        {"theme": "What is a step-by-step instruction (algorithm idea)", "grades": (4, 9)},
+        {"theme": "Sequence — order matters", "grades": (4, 10)},
+        {"theme": "Simple decisions: if this, then that (no heavy syntax)", "grades": (4, 10)},
+        {"theme": "Repeat a step (loop idea with counting)", "grades": (4, 10)},
+        {"theme": "Debug a wrong order of steps", "grades": (4, 12)},
+        {"theme": "Tiny plan: input → process → output", "grades": (5, 12)},
+    ],
+    "Learning Scratch": [
+        {"theme": "Sprites, stage, and one motion block", "grades": (4, 8)},
+        {"theme": "Events: when green flag / when clicked", "grades": (4, 9)},
+        {"theme": "Looks and simple animation", "grades": (4, 8)},
+        {"theme": "Loops in Scratch (repeat / forever carefully)", "grades": (4, 9)},
+        {"theme": "If touching / simple condition", "grades": (5, 10)},
+        {"theme": "Variables as a score or counter", "grades": (5, 10)},
+        {"theme": "Short story or interactive scene (few sprites)", "grades": (4, 9)},
+    ],
+    "Learning Python": [
+        {"theme": "Variables and simple types (int, str)", "grades": (6, 12)},
+        {"theme": "print and input — tiny interactive script", "grades": (6, 12)},
+        {"theme": "if / elif / else with clear conditions", "grades": (6, 12)},
+        {"theme": "for or while loop — one clear goal", "grades": (7, 12)},
+        {"theme": "Lists — store and read a few items", "grades": (7, 12)},
+        {"theme": "Tiny function — one job, return or print", "grades": (8, 12)},
+        {"theme": "Read an error message and fix one bug", "grades": (6, 12)},
+    ],
+    "Web Development": [
+        {"theme": "HTML page skeleton — headings and paragraphs", "grades": (7, 12)},
+        {"theme": "Links and images (safe placeholders)", "grades": (7, 12)},
+        {"theme": "Lists and a simple layout structure", "grades": (7, 12)},
+        {"theme": "CSS: color, font, spacing on one page", "grades": (8, 12)},
+        {"theme": "One interactive idea (button or form — concept first)", "grades": (8, 12)},
+        {"theme": "Make a tiny personal or school-safe page section", "grades": (7, 12)},
+    ],
+    "App Development": [
+        {"theme": "App idea → screens (wireframe in words)", "grades": (7, 12)},
+        {"theme": "User input and what the app should show", "grades": (7, 12)},
+        {"theme": "One screen, one job", "grades": (7, 12)},
+        {"theme": "Simple state: logged idea of on/off or count", "grades": (8, 12)},
+        {"theme": "Navigation between two screens (concept)", "grades": (8, 12)},
+        {"theme": "Tiny feature end-to-end (no full store app)", "grades": (8, 12)},
+    ],
+    "Game Development": [
+        {"theme": "Player, goal, and win/lose rule", "grades": (5, 12)},
+        {"theme": "Move on input (keyboard or tap idea)", "grades": (5, 12)},
+        {"theme": "Collision or catch idea (simple)", "grades": (6, 12)},
+        {"theme": "Score counter", "grades": (6, 12)},
+        {"theme": "One level loop: start → play → end", "grades": (6, 12)},
+        {"theme": "Polish one feel (speed, difficulty step)", "grades": (7, 12)},
+    ],
+}
+
+AI_ROBOT_THEMES: dict[str, list[dict]] = {
+    "Understanding Basic AI": [
+        {"theme": "What AI is (and is not) in simple words", "grades": (4, 12)},
+        {"theme": "Pattern recognition idea — examples kids know", "grades": (4, 10)},
+        {"theme": "Rules vs learning from examples (plain language)", "grades": (6, 12)},
+        {"theme": "Helpful AI vs hype — school-safe talk", "grades": (5, 12)},
+        {"theme": "Bias / mistakes AI can make (gentle)", "grades": (7, 12)},
+        {"theme": "Input → model idea → output (one diagram in words)", "grades": (6, 12)},
+    ],
+    "Electronic Fundamentals": [
+        {"theme": "Power, open/closed circuit idea (no live wiring)", "grades": (5, 12)},
+        {"theme": "What a component does in one sentence", "grades": (5, 11)},
+        {"theme": "Sensors vs actuators (sense vs act)", "grades": (6, 12)},
+        {"theme": "Safe lab habits — conceptual only", "grades": (5, 12)},
+        {"theme": "Read a simple block diagram", "grades": (6, 12)},
+        {"theme": "Why grounding / safety matters (no how-to for mains)", "grades": (7, 12)},
+    ],
+    "Programming the Microcontroller": [
+        {"theme": "Board as a tiny computer — inputs and pins idea", "grades": (6, 12)},
+        {"theme": "Upload a program idea — what “running on board” means", "grades": (6, 12)},
+        {"theme": "Digital on/off output (LED idea only)", "grades": (6, 12)},
+        {"theme": "Read a simple input in code structure", "grades": (7, 12)},
+        {"theme": "Loop: sense → decide → act (pseudo)", "grades": (7, 12)},
+        {"theme": "One bug: wrong pin or logic — find it", "grades": (7, 12)},
+    ],
+    "Sensors and Perception": [
+        {"theme": "What a sensor measures in the real world", "grades": (5, 12)},
+        {"theme": "Digital vs “more/less” reading (simple)", "grades": (6, 12)},
+        {"theme": "If sense X → do Y rule", "grades": (5, 12)},
+        {"theme": "Noise / false reading — why one sample can lie", "grades": (7, 12)},
+        {"theme": "Combine two sensor ideas (concept)", "grades": (7, 12)},
+        {"theme": "Predict output from a short scenario", "grades": (6, 12)},
+    ],
+    "Motors and Movement": [
+        {"theme": "Why motors move robots — energy to motion", "grades": (5, 12)},
+        {"theme": "Forward / stop / turn as commands", "grades": (5, 11)},
+        {"theme": "Speed vs power in plain words", "grades": (6, 12)},
+        {"theme": "One motor vs differential drive idea", "grades": (7, 12)},
+        {"theme": "Safe limits — don’t stall / overheat (concept)", "grades": (6, 12)},
+        {"theme": "Plan a short path with 3–4 moves", "grades": (5, 12)},
+    ],
+    "Building Behaviors": [
+        {"theme": "Behavior = sense + rule + action", "grades": (6, 12)},
+        {"theme": "Wander / avoid / seek — pick one and define it", "grades": (6, 12)},
+        {"theme": "State: idle → active → done", "grades": (7, 12)},
+        {"theme": "Combine sensor + motor into one smart action", "grades": (7, 12)},
+        {"theme": "Test plan: what should happen if…", "grades": (6, 12)},
+        {"theme": "Improve one behavior after a “fail” story", "grades": (7, 12)},
+    ],
+}
+
+# Light banks for core subjects (no formal tracks) — variety without a syllabus map
+GENERAL_MATH_THEMES: list[dict] = [
+    {"theme": "Whole numbers — place value and comparing", "grades": (4, 6)},
+    {"theme": "Addition / subtraction in a real scene", "grades": (4, 7)},
+    {"theme": "Multiplication / division as equal groups", "grades": (4, 8)},
+    {"theme": "Fractions as parts of a whole", "grades": (4, 9)},
+    {"theme": "Decimals and money", "grades": (5, 10)},
+    {"theme": "Ratios and simple proportions", "grades": (6, 12)},
+    {"theme": "Percent in shopping or scores", "grades": (6, 12)},
+    {"theme": "Area and perimeter", "grades": (4, 10)},
+    {"theme": "Volume or surface (simple)", "grades": (6, 12)},
+    {"theme": "Angles and simple shapes", "grades": (5, 11)},
+    {"theme": "Data: tables, mean, or simple graphs", "grades": (5, 12)},
+    {"theme": "Simple equations — find the unknown", "grades": (6, 12)},
+    {"theme": "Word problems with two steps", "grades": (5, 12)},
+    {"theme": "Time, schedules, and elapsed time", "grades": (4, 9)},
+]
+
+GENERAL_ENGLISH_THEMES: list[dict] = [
+    {"theme": "Everyday conversation — greet, ask, answer", "grades": (4, 8)},
+    {"theme": "Describe a person, place, or object", "grades": (4, 9)},
+    {"theme": "Past / present / future in short sentences", "grades": (4, 10)},
+    {"theme": "Vocabulary in a mini-story", "grades": (4, 10)},
+    {"theme": "Reading a short paragraph + answer", "grades": (4, 11)},
+    {"theme": "Write 3–6 clear sentences on a familiar topic", "grades": (4, 11)},
+    {"theme": "Fix one grammar mistake with a model sentence", "grades": (5, 12)},
+    {"theme": "Opinion with because", "grades": (5, 12)},
+    {"theme": "Instructions or a simple process (how to…)", "grades": (5, 12)},
+    {"theme": "Compare two things with simple adjectives", "grades": (4, 10)},
+    {"theme": "Email or message style (school-safe)", "grades": (7, 12)},
+    {"theme": "Listen/read a short dialogue and reply", "grades": (4, 9)},
+]
+
+# Spelling Bee — word lists by skill; grade scales word difficulty inside the theme
+SPELLING_BEE_THEMES: list[dict] = [
+    {"theme": "Short everyday words (C-V-C and common sight words)", "grades": (4, 6)},
+    {"theme": "School and classroom vocabulary", "grades": (4, 8)},
+    {"theme": "Home, family, and daily life words", "grades": (4, 8)},
+    {"theme": "Animals, nature, and weather words", "grades": (4, 9)},
+    {"theme": "Food and market words", "grades": (4, 9)},
+    {"theme": "Double letters and common patterns (ll, ss, ee, oo)", "grades": (4, 10)},
+    {"theme": "Silent letters (e.g. kn-, -e, wr-)", "grades": (5, 11)},
+    {"theme": "Word endings (-ing, -ed, -er, -ly)", "grades": (5, 11)},
+    {"theme": "Homophones (there/their/they’re style pairs — school-safe)", "grades": (5, 12)},
+    {"theme": "Science and study words (grade-friendly)", "grades": (6, 12)},
+    {"theme": "Multi-syllable words — break into parts then spell", "grades": (6, 12)},
+    {"theme": "Challenge round — mixed review from weak spots", "grades": (4, 12)},
+]
+
+# Exam Preparation — skill / mock-style practice only (not official scores or real past papers)
+EXAM_PREP_THEMES: dict[str, list[dict]] = {
+    "IELTS": [
+        {"theme": "Listening — short dialogue gist and detail", "grades": (8, 12)},
+        {"theme": "Reading — skimming for main idea", "grades": (8, 12)},
+        {"theme": "Reading — scanning for a specific fact", "grades": (8, 12)},
+        {"theme": "Writing Task 1 style — describe a simple chart or process (practice)", "grades": (9, 12)},
+        {"theme": "Writing Task 2 style — opinion paragraph with reasons (practice)", "grades": (9, 12)},
+        {"theme": "Speaking Part 1 style — short personal answers", "grades": (8, 12)},
+        {"theme": "Speaking Part 2 style — 1-minute talk plan (bullets then speak/write)", "grades": (9, 12)},
+        {"theme": "Vocabulary for common IELTS topics (education, environment, technology)", "grades": (8, 12)},
+        {"theme": "Coherence — link ideas with because / however / for example", "grades": (8, 12)},
+        {"theme": "Mini mock — one short timed skill (not a full test)", "grades": (9, 12)},
+    ],
+    "SAT": [
+        {"theme": "Reading — main idea of a short passage", "grades": (9, 12)},
+        {"theme": "Reading — evidence / which line supports the claim", "grades": (9, 12)},
+        {"theme": "Writing & Language — grammar in context (one error type)", "grades": (9, 12)},
+        {"theme": "Writing & Language — clarity and concision", "grades": (9, 12)},
+        {"theme": "Math — algebra linear equations and systems (practice)", "grades": (9, 12)},
+        {"theme": "Math — ratios, percentages, and proportional reasoning", "grades": (9, 12)},
+        {"theme": "Math — data, tables, and simple statistics", "grades": (9, 12)},
+        {"theme": "Math — geometry and measurement essentials", "grades": (9, 12)},
+        {"theme": "Problem strategy — eliminate wrong choices with reasons", "grades": (9, 12)},
+        {"theme": "Mini mock — short mixed set (few items, not full section)", "grades": (10, 12)},
+    ],
+    "TOEFL": [
+        {"theme": "Reading — academic paragraph main idea", "grades": (9, 12)},
+        {"theme": "Reading — vocabulary in context", "grades": (9, 12)},
+        {"theme": "Listening — campus or academic talk gist", "grades": (9, 12)},
+        {"theme": "Listening — detail and inference (short)", "grades": (9, 12)},
+        {"theme": "Speaking — independent opinion with two reasons", "grades": (9, 12)},
+        {"theme": "Speaking — integrated: read/listen then short summary (practice)", "grades": (10, 12)},
+        {"theme": "Writing — independent essay outline + one strong paragraph", "grades": (9, 12)},
+        {"theme": "Writing — integrated notes → short response structure", "grades": (10, 12)},
+        {"theme": "Academic vocabulary — define and use in one sentence", "grades": (9, 12)},
+        {"theme": "Mini mock — one skill block under soft time pressure", "grades": (10, 12)},
+    ],
+}
+
+# French / Spanish — same skill spine; short target-language practice lines
+LANGUAGE_THEMES: dict[str, list[dict]] = {
+    "French": [
+        {"theme": "Greetings and polite phrases", "grades": (4, 12)},
+        {"theme": "Numbers, age, and simple quantities", "grades": (4, 10)},
+        {"theme": "Introduce yourself and ask someone’s name", "grades": (4, 11)},
+        {"theme": "Family and friends vocabulary in short lines", "grades": (4, 11)},
+        {"theme": "Food and ordering (school-safe café role-play)", "grades": (5, 12)},
+        {"theme": "School subjects and timetable words", "grades": (5, 12)},
+        {"theme": "Present tense of common verbs in short sentences", "grades": (5, 12)},
+        {"theme": "Describe a day or place in 3–5 short sentences", "grades": (6, 12)},
+        {"theme": "Ask and answer simple questions (où, quand, pourquoi)", "grades": (5, 12)},
+        {"theme": "Past idea with passé composé (one clear pattern)", "grades": (7, 12)},
+    ],
+    "Spanish": [
+        {"theme": "Greetings and polite phrases", "grades": (4, 12)},
+        {"theme": "Numbers, age, and simple quantities", "grades": (4, 10)},
+        {"theme": "Introduce yourself and ask someone’s name", "grades": (4, 11)},
+        {"theme": "Family and friends vocabulary in short lines", "grades": (4, 11)},
+        {"theme": "Food and ordering (school-safe café role-play)", "grades": (5, 12)},
+        {"theme": "School subjects and timetable words", "grades": (5, 12)},
+        {"theme": "Present tense of common verbs in short sentences", "grades": (5, 12)},
+        {"theme": "Describe a day or place in 3–5 short sentences", "grades": (6, 12)},
+        {"theme": "Ask and answer simple questions (dónde, cuándo, por qué)", "grades": (5, 12)},
+        {"theme": "Past idea with pretérito (one clear pattern)", "grades": (7, 12)},
+    ],
+}
+
+
+def _normalize_track_key(subject_key: str, subject_track: str | None) -> str:
+    """Map UI track/level labels to bank keys."""
+    t = (subject_track or "").strip()
+    key = (subject_key or "").strip().lower()
+    low = t.lower()
+
+    sm_aliases = {
+        "logic puzzle": "Logic Puzzle",
+        "math kangaroo": "Math Kangaroo style",
+        "math kangaroo style": "Math Kangaroo style",
+        "kangaroo": "Math Kangaroo style",
+        "sasmo": "SASMO style",
+        "sasmo style": "SASMO style",
+        "suken": "Suken style",
+        "suken style": "Suken style",
+        "olympiad": "Olympiad style",
+        "olympiad style": "Olympiad style",
+    }
+    ae_aliases = {
+        "explorer": "Explorer",
+        "trailblazer": "Trailblazer",
+        "pathfinder": "Pathfinder",
+        "summit": "Summit",
+        "apex": "Apex",
+    }
+    coding_aliases = {
+        "basic coding": "Basic Coding",
+        "basic": "Basic Coding",
+        "scratch": "Learning Scratch",
+        "learning scratch": "Learning Scratch",
+        "python": "Learning Python",
+        "learning python": "Learning Python",
+        "web": "Web Development",
+        "web development": "Web Development",
+        "app": "App Development",
+        "app development": "App Development",
+        "game": "Game Development",
+        "game development": "Game Development",
+    }
+    ai_aliases = {
+        "understanding basic ai": "Understanding Basic AI",
+        "basic ai": "Understanding Basic AI",
+        "electronic": "Electronic Fundamentals",
+        "electronic fundamentals": "Electronic Fundamentals",
+        "microcontroller": "Programming the Microcontroller",
+        "programming the microcontroller": "Programming the Microcontroller",
+        "sensor": "Sensors and Perception",
+        "sensors and perception": "Sensors and Perception",
+        "motor": "Motors and Movement",
+        "motors and movement": "Motors and Movement",
+        "building behaviors": "Building Behaviors",
+        "behaviors": "Building Behaviors",
+    }
+
+    if not t:
+        return ""
+    if key == "special_math":
+        if t in SPECIAL_MATH_THEMES:
+            return t
+        for k, v in sm_aliases.items():
+            if k in low:
+                return v
+        return t
+    if key == "advanced_english":
+        if t in ADVANCED_ENGLISH_THEMES:
+            return t
+        for k, v in ae_aliases.items():
+            if k in low:
+                return v
+        return t
+    if key == "coding":
+        if t in CODING_THEMES:
+            return t
+        for k, v in coding_aliases.items():
+            if k in low:
+                return v
+        return t
+    if key in ("ai_and_robot", "ai_robot"):
+        if t in AI_ROBOT_THEMES:
+            return t
+        for k, v in ai_aliases.items():
+            if k in low:
+                return v
+        return t
+    if key in ("languages", "french", "spanish"):
+        if "spanish" in low or key == "spanish":
+            return "Spanish"
+        if "french" in low or key == "french":
+            return "French"
+        if t in LANGUAGE_THEMES:
+            return t
+        return t
+    if key in ("exam_preparation", "exam_prep"):
+        exam_aliases = {
+            "ielts": "IELTS",
+            "sat": "SAT",
+            "toefl": "TOEFL",
+        }
+        if t in EXAM_PREP_THEMES:
+            return t
+        for k, v in exam_aliases.items():
+            if k in low:
+                return v
+        return t
+    return t
+
+
+def _grade_band(grade: int | None) -> str:
+    if grade is None:
+        return "mid"
+    try:
+        g = int(grade)
+    except (TypeError, ValueError):
+        return "mid"
+    if g <= 5:
+        return "lower"
+    if g <= 8:
+        return "mid"
+    return "upper"
+
+
+def _grade_fit_lines(grade: int | None) -> str:
+    band = _grade_band(grade)
+    if band == "lower":
+        return (
+            "GRADE FIT (about 4–5): very simple words; small numbers; one main idea; "
+            "more scaffolding; short steps; diagrams or examples before abstract rules."
+        )
+    if band == "upper":
+        return (
+            "GRADE FIT (about 9–12): still plain English; allow one extra step; "
+            "richer wording; less hand-holding; still no textbook wall of text."
+        )
+    return (
+        "GRADE FIT (about 6–8): clear steps; moderate numbers; short reasoning; "
+        "one challenge step OK after a success."
+    )
+
+
+def themes_for(
+    subject_key: str,
+    subject_track: str | None,
+    grade: int | None,
+) -> list[str]:
+    """Return theme title strings that soft-fit this grade (empty if no bank)."""
+    key = (subject_key or "").strip().lower()
+    track = _normalize_track_key(key, subject_track)
+    bank: list[dict] = []
+    if key == "special_math":
+        bank = list(SPECIAL_MATH_THEMES.get(track, []))
+    elif key == "advanced_english":
+        bank = list(ADVANCED_ENGLISH_THEMES.get(track, []))
+    elif key == "coding":
+        bank = list(CODING_THEMES.get(track, []))
+    elif key in ("ai_and_robot", "ai_robot"):
+        bank = list(AI_ROBOT_THEMES.get(track, []))
+    elif key in ("general_math", "math"):
+        bank = list(GENERAL_MATH_THEMES)
+    elif key in ("general_english", "english"):
+        bank = list(GENERAL_ENGLISH_THEMES)
+    elif key in ("languages", "french", "spanish"):
+        bank = list(LANGUAGE_THEMES.get(track, []))
+        if not bank and key == "french":
+            bank = list(LANGUAGE_THEMES.get("French", []))
+        if not bank and key == "spanish":
+            bank = list(LANGUAGE_THEMES.get("Spanish", []))
+    elif key in ("exam_preparation", "exam_prep"):
+        bank = list(EXAM_PREP_THEMES.get(track, []))
+    elif key in ("spelling_bee", "spelling"):
+        bank = list(SPELLING_BEE_THEMES)
+    if not bank:
+        return []
+
+    g: int | None
+    try:
+        g = int(grade) if grade is not None else None
+    except (TypeError, ValueError):
+        g = None
+
+    out: list[str] = []
+    for item in bank:
+        gr = item.get("grades")
+        title = str(item.get("theme") or "").strip()
+        if not title:
+            continue
+        if gr is None or g is None:
+            out.append(title)
+            continue
+        lo, hi = gr
+        if lo <= g <= hi:
+            out.append(title)
+    # If grade filtered everything (odd track+grade), fall back to full bank
+    if not out:
+        out = [str(i.get("theme") or "").strip() for i in bank if i.get("theme")]
+    return out
+
+
+def theme_bank_block(
+    subject_key: str,
+    subject_track: str | None,
+    grade: int | None,
+) -> str:
+    """
+    Inject A) theme bank into the teacher system prompt.
+    Same themes across grades; list is filtered to soft grade range; difficulty scaled by GRADE FIT.
+    """
+    key = (subject_key or "").strip().lower()
+    supported = (
+        "special_math",
+        "advanced_english",
+        "coding",
+        "ai_and_robot",
+        "ai_robot",
+        "general_math",
+        "math",
+        "general_english",
+        "english",
+        "languages",
+        "french",
+        "spanish",
+        "exam_preparation",
+        "exam_prep",
+        "spelling_bee",
+        "spelling",
+    )
+    if key not in supported:
+        return ""
+
+    themes = themes_for(key, subject_track, grade)
+    if not themes:
+        return ""
+
+    track = _normalize_track_key(key, subject_track) or (subject_track or "").strip()
+    if key in ("general_math", "math"):
+        focus_line = "Focus: General Math (no formal track)"
+    elif key in ("general_english", "english"):
+        focus_line = "Focus: General English (no formal track)"
+    elif key in ("spelling_bee", "spelling"):
+        focus_line = "Focus: Spelling Bee (word practice — hear → spell → check)"
+    elif key in ("languages", "french", "spanish"):
+        focus_line = f"Language: {track or 'French/Spanish'}"
+    elif key in ("exam_preparation", "exam_prep"):
+        focus_line = f"Exam track: {track or 'IELTS / SAT / TOEFL'} (practice only)"
+    else:
+        focus_line = f"Track/level: {track or 'this focus'}"
+
+    lines = "\n".join(f"  - {t}" for t in themes)
+    fit = _grade_fit_lines(grade)
+
+    extra = ""
+    if key == "coding":
+        extra = (
+            "- Text-first: tiny snippets only; never a whole app in one reply.\n"
+            "- Prefer complete small answers; if long, finish one piece and invite “continue”.\n"
+        )
+    elif key in ("ai_and_robot", "ai_robot"):
+        extra = (
+            "- Conceptual and safe only — no live wiring, mains power, or dangerous build steps.\n"
+            "- Prefer predict / order / explain over physical instructions.\n"
+        )
+    elif key in ("spelling_bee", "spelling"):
+        extra = (
+            "- One word (or short pair) at a time. Hear/say → student spells → check → next.\n"
+            "- Optional: brief meaning or a tiny example sentence after a correct spell.\n"
+            "- Prefer oral-friendly words; TTS may read the target word aloud.\n"
+        )
+    elif key in ("languages", "french", "spanish"):
+        lang = track or ("Spanish" if key == "spanish" else "French")
+        extra = (
+            f"- Prefer short {lang} model lines the student can repeat or reply to.\n"
+            "- English support OK when needed; do not lecture only in English.\n"
+            "- One phrase or short sentence to try per turn when practicing speaking/writing.\n"
+        )
+    elif key in ("exam_preparation", "exam_prep"):
+        extra = (
+            "- Practice only — never invent an official band/score or claim a real exam result.\n"
+            "- Name the task type clearly (e.g. IELTS Writing Task 2 style practice).\n"
+            "- Short task tip → student try → checklist feedback. Prefer mini skills over full mocks.\n"
+            "- Do not paste copyrighted real past papers; use original short practice items.\n"
+            "- MINI MOCK frequency: only ~1 in 4–5 lessons on this track, or if Next/student asks — not every live lesson.\n"
+            "- Mini mock size: 3–5 items, one skill; optional N of M correct only; never official totals/bands.\n"
+        )
+
+    return f"""
+THEME BANK (pick focus for THIS lesson — not a fixed lesson number):
+{focus_line}
+{fit}
+Available themes (prefer last-recap Next when set; otherwise pick one; do NOT repeat the same theme as the immediate last lesson if notes show it):
+{lines}
+Rules:
+- Choose ONE main theme for the lesson spine; practice stays inside that theme.
+- New practice every lesson (new numbers, story, code, or wording) even on the same theme.
+- If last Next points clearly at a skill, prefer a theme that matches it.
+- Grade scales difficulty inside the theme — do not invent a separate curriculum map.
+{extra}"""
 
 
 def subject_addon(subject_key: str, subject_track: str | None = None) -> str:
@@ -101,7 +718,14 @@ SUBJECT FOCUS — Exam Preparation (IELTS / SAT / TOEFL style practice):{track_b
 - This is practice only — never give official scores or claim real exam results.
 - Flow: short task tip → student try → checklist-style feedback.
 - Stay calm and focused; fewer jokes; more structure.
-- Keep tasks short enough for the lesson block; full mock exams later if needed.
+- Keep tasks short enough for the lesson block; no full-length mock exams in v1.
+
+MINI MOCK (Exam Prep only — not every lesson):
+- Mini mock is occasional: about 1 in 4–5 lessons on this exam track, OR when last Next asks for a short timed set, OR when the student asks for a mini mock.
+- Most lessons stay normal skill practice (teach → try → guide). Do NOT start every session as a mini mock.
+- When you run a mini mock: 3–5 original short items, one skill only; soft time feel; then checklist + 1 strength + 1 fix.
+- Optional: “N of M practice items correct” only if answers are clear. Never an official band/total (no IELTS 6.5, SAT 1280, TOEFL total, or “you would score X on the real test”).
+- Mini mock is not used for General Math, General English, Coding, AI & Robot, or Languages.
 """
 
     if key in ("coding",):
@@ -137,6 +761,22 @@ SUBJECT FOCUS — Languages:{track_bit}{lang_hint}
 - Practice: repeat or reply with one phrase or short sentence.
 - Correct by giving a clear model sentence, not a long grammar lecture.
 - Do not stay in long English-only explanations when a short model phrase would help more.
+"""
+
+    if key in ("spelling_bee", "spelling"):
+        return f"""
+SUBJECT FOCUS — Spelling Bee (teacher Ivy):{track_bit}
+- Core loop every practice turn: (1) present ONE target word, (2) student spells it, (3) check, (4) next word.
+- Present the word clearly. Prefer: say/show the word once, optional short meaning, then ask the student to spell.
+- Student may type letters or the full word. Accept common formats (spaces between letters OK).
+- If correct: short praise + optional one-line meaning or example sentence + next word.
+- If wrong: do NOT shame. Show the correct spelling, name the hard part (e.g. double letter, silent e), let them retry once, then move on if still stuck.
+- Grade scales word difficulty: Grade 4–5 short everyday words; higher grades longer patterns and multi-syllable words.
+- Use the theme bank for word-list focus (school, animals, silent letters, etc.). Pick words that fit the theme and grade.
+- Keep a tiny “word list feel”: 4–8 solid tries in a block is better than one long lecture on rules.
+- Light contest energy is OK (“round 1”, “challenge word”) but this is practice, not an official Spelling Bee contest.
+- Optional TTS: the app may speak the target word; write so the spoken word is clear if read aloud (avoid ambiguous homophone traps without context).
+- One word at a time. No long vocabulary essays. No unrelated grammar lessons unless a spelling pattern needs one short tip.
 """
 
     return ""
@@ -209,6 +849,40 @@ def pacing_guidance(*, seconds_remaining: int | None, duration_limit_sec: int | 
 
 
 
+def teaching_style_block(
+    teaching_style: str | None,
+    practice_complete: bool = False,
+) -> str:
+    """Focus vs Relax — student Profile preference. Applies to the whole session."""
+    style = (teaching_style or "focus").strip().lower()
+    if style not in ("focus", "relax"):
+        style = "focus"
+
+    if style == "focus":
+        return """TEACHING STYLE: FOCUS (student chose this on Profile)
+- Stay on the lesson plan and the current skill for the whole session.
+- Side or off-topic questions: give a short answer, then return to the goal ("Let's finish this first").
+- Do not open long detours even after practice.
+- Near time end: wrap with a short recap as usual.
+"""
+
+    # Relax — gated by practice_complete for this session
+    if practice_complete:
+        return """TEACHING STYLE: RELAX — OPEN PHASE (practice for this lesson is done)
+- Student chose Relax on Profile and has finished this lesson's practice questions.
+- You may welcome related questions, extra examples, and light off-topic curiosity.
+- Still end on time: when time is low, steer back and wrap with a short recap.
+- Do not abandon the subject entirely; keep a friendly link to learning.
+"""
+    return """TEACHING STYLE: RELAX — CLOSED PHASE (practice not finished yet)
+- Student chose Relax on Profile, but practice questions for THIS lesson are not done yet.
+- Behave like Focus until practice is finished: stay on the plan.
+- Side questions: short answer, then back to the lesson.
+- After practice is marked complete, the app will switch you to the open Relax phase.
+- Near time end before practice is done: still wrap with recap; do not force open chat.
+"""
+
+
 def teacher_system_prompt(
     *,
     teacher_key: str,
@@ -221,6 +895,8 @@ def teacher_system_prompt(
     seconds_remaining: int | None = None,
     duration_limit_sec: int | None = None,
     season_note: str | None = None,
+    teaching_style: str | None = None,
+    practice_complete: bool = False,
 ) -> str:
     name = TEACHER_NAMES.get(teacher_key, "your AI teacher")
     subject = SUBJECT_LABELS.get(subject_key, subject_key)
@@ -241,17 +917,22 @@ def teacher_system_prompt(
 
     addon = subject_addon(subject_key, subject_track).strip()
     addon_block = ("\n" + addon + "\n") if addon else ""
+    theme_block = theme_bank_block(subject_key, subject_track, grade).strip()
+    theme_block = ("\n" + theme_block + "\n") if theme_block else ""
     pacing_block = pacing_guidance(
         seconds_remaining=seconds_remaining,
         duration_limit_sec=duration_limit_sec,
     )
     season_block = (season_note or "").strip()
+    style_block = teaching_style_block(teaching_style, practice_complete)
 
     return f"""You are {name}, a warm, patient AI teacher for AI School.
 Subject: {subject}{track}.
 Student grade: {grade_s} (if unknown, teach like grade 5–6: simple words).
 Mode: {mode_s}. Plan: {plan_tier or "unknown"}.
 {addon_block}
+{theme_block}
+{style_block}
 HOW TO TEACH (most important):
 - Use SIMPLE words a child can understand. Prefer everyday examples (food, money, games, school).
 - Explain in small steps. Number steps when helpful (1, 2, 3).
@@ -338,6 +1019,7 @@ TEACHER FLAVOR (same rhythm, different examples):
 - Codey (coding): tiny challenges, "what if we change this?"
 - Calliope (AI & robot): curiosity about how things work.
 - Étoile (French) / Estrella (Spanish): brief greeting in that language when natural, one phrase to try.
+- Ivy (Spelling Bee): warm coach energy; one word at a time; hear → spell → check; clear praise or one fix tip.
 - Others: stay warm and concrete in this subject.
 
 MEMORY (this subject only):
@@ -362,21 +1044,29 @@ OUTPUT:
 
 def recap_system_prompt() -> str:
     return """You write an end-of-lesson recap for a student (grades 4–12) and a short Khmer line for parents.
+You also fill a small structured block the app saves as JSON (not a report card).
 
 Rules:
-- Use ONLY the chat notes. Do not invent topics or problems.
+- Use ONLY the chat notes. Do not invent topics, mistakes, or numbers.
 - Simple words. Encouraging. No shame.
-- Not an official test score or report card.
-- English under ~120 words total.
+- Not an official test score or report card. Never invent a percentage score.
+- English human part under ~120 words total.
 
-Each field:
+Human fields:
 - Did: 1–2 sentences. Name the skill and one concrete example from the chat (numbers, words, or code if present).
 - Strength: 1 sentence about something the student actually did (asked clearly, tried, corrected a mistake).
 - Next: 1 concrete task for next time, doable in a few minutes. Not "study more."
 - KM: 1–2 short Khmer sentences with the same idea for a parent.
 
+Structured fields (for the app — still only from this chat):
+- topics_covered: 1–5 short tags of what was practiced (empty list if chat was tiny).
+- weak_topics: 0–3 soft tags that need more practice (empty if none clear).
+- mistakes: 0–3 items { "what": "...", "fix": "..." } only if a clear wrong→right (or clear wrong) appeared. Soft wording. Empty list if none.
+- practice: optional { "attempted": N, "ok": N } only if practice tries are obvious in the chat; else omit or use 0.
+
 If the chat is very short:
-- Still fill all four fields honestly.
+- Still fill Did / Strength / Next / KM honestly.
+- Prefer empty lists over guesses for structured fields.
 - Next can be: Ask one new question on the same topic next time.
 
 Example (style only — replace with real chat content):
@@ -384,6 +1074,8 @@ Did: We found 1/2 of 8 using a pizza with 8 slices; half was 4 slices.
 Strength: You asked a clear question and followed the example.
 Next: Try 1/4 of 8 with the same pizza idea.
 KM: ថ្ងៃនេះរៀនរក 1/2 នៃ 8 តាមរូបភាពភីហ្សា។ លើកក្រោយសាក 1/4 នៃ 8។
+JSON:
+{"topics_covered":["half of a set","pizza model"],"weak_topics":["one-fourth"],"mistakes":[{"what":"half of 8 as 2","fix":"4"}],"practice":{"attempted":2,"ok":1}}
 
 Output EXACTLY this structure (labels in English):
 
@@ -391,9 +1083,65 @@ Did: ...
 Strength: ...
 Next: ...
 KM: ...
+JSON:
+{...}
 
-No markdown, no bullet characters, no extra sections.
+No markdown, no bullet characters, no extra sections. JSON must be one valid object after the JSON: label.
 """
+
+
+def parse_recap_structured_json(text: str) -> dict:
+    """Extract the JSON object after the JSON: label. Never raise; return {} on failure."""
+    import json
+    import re
+
+    if not text:
+        return {}
+    m = re.search(r"(?is)\bJSON:\s*(\{.*\})\s*$", text.strip())
+    if not m:
+        m = re.search(r"(?is)\bJSON:\s*(\{.*\})", text)
+    if not m:
+        return {}
+    raw = m.group(1).strip()
+    try:
+        data = json.loads(raw)
+    except Exception:
+        m2 = re.search(r"\{[^{}]*\}", raw, re.S)
+        if not m2:
+            return {}
+        try:
+            data = json.loads(m2.group(0))
+        except Exception:
+            return {}
+    if not isinstance(data, dict):
+        return {}
+    out: dict = {}
+    topics = data.get("topics_covered") or []
+    weak = data.get("weak_topics") or []
+    mistakes = data.get("mistakes") or []
+    practice = data.get("practice")
+    if isinstance(topics, list):
+        out["topics_covered"] = [str(t).strip() for t in topics if str(t).strip()][:5]
+    if isinstance(weak, list):
+        out["weak_topics"] = [str(t).strip() for t in weak if str(t).strip()][:3]
+    if isinstance(mistakes, list):
+        cleaned = []
+        for item in mistakes[:3]:
+            if isinstance(item, dict):
+                what = str(item.get("what") or "").strip()
+                fix = str(item.get("fix") or "").strip()
+                if what:
+                    cleaned.append({"what": what[:120], "fix": fix[:120]})
+        out["mistakes"] = cleaned
+    if isinstance(practice, dict):
+        try:
+            out["practice"] = {
+                "attempted": max(0, int(practice.get("attempted") or 0)),
+                "ok": max(0, int(practice.get("ok") or 0)),
+            }
+        except Exception:
+            pass
+    return out
 
 
 def recap_user_payload(
@@ -413,7 +1161,8 @@ def recap_user_payload(
         f"Chat notes (excerpt):\n{chat_excerpt}\n\n"
         "Focus on the last part of the chat if notes are long.\n"
         "Prefer the final correct idea over early confusion.\n"
-        "Write the recap now using Did / Strength / Next / KM."
+        "Write the recap now using Did / Strength / Next / KM / JSON.\n"
+        "Structured JSON: topics_covered, weak_topics, mistakes, optional practice — only from this chat, no invented scores."
     )
 
 

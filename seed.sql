@@ -52,6 +52,8 @@ ON CONFLICT (student_id) DO UPDATE SET
 
 -- Subject Pass: Coding for current calendar month (Phnom Penh “today” approximated by CURRENT_DATE;
 -- app still uses Asia/Phnom_Penh for pools)
+-- subject_key values (examples): general_math, general_english, advanced_english, special_math,
+-- exam_preparation, coding, ai_and_robot, spelling_bee, french, spanish
 INSERT INTO subject_passes (
   id, student_id, subject_key, period_start, period_end, status, created_at
 ) VALUES (
@@ -64,6 +66,20 @@ INSERT INTO subject_passes (
   now()
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- Optional second Pass example (commented): Spelling Bee for Basic
+-- INSERT INTO subject_passes (
+--   id, student_id, subject_key, period_start, period_end, status, created_at
+-- ) VALUES (
+--   'pass_demo_spelling',
+--   'stu_demo_sokha',
+--   'spelling_bee',
+--   date_trunc('month', CURRENT_DATE)::date,
+--   (date_trunc('month', CURRENT_DATE) + interval '1 month')::date,
+--   'active',
+--   now()
+-- )
+-- ON CONFLICT (id) DO NOTHING;
 
 -- Optional: zero usage row for today
 INSERT INTO usage_daily (student_id, usage_date, sessions_used)
@@ -84,3 +100,5 @@ COMMIT;
 -- API test:
 --   POST /v1/auth/pin  { "student_id": "stu_demo_sokha", "pin": "4821" }
 --   POST /v1/sessions/start  { "subject_key": "coding", "mode": "lesson" }
+--   POST /v1/sessions/start  { "subject_key": "spelling_bee", "mode": "lesson" }
+--     (Basic needs an active subject_passes row with subject_key = 'spelling_bee')
