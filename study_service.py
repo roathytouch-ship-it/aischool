@@ -1132,8 +1132,9 @@ class StudyService:
         )
         self.store.add_message(user_msg)
 
-        # Student grade for grade-fit teaching (from DB when available)
+        # Student grade + preferred name for teaching (from DB when available)
         grade_val = None
+        preferred_name = None
         try:
             from repositories import get_repos
 
@@ -1143,8 +1144,20 @@ class StudyService:
                 grade_val = int(st_row["grade"])
                 if grade_val < 4 or grade_val > 12:
                     grade_val = None
+            if st_row:
+                preferred_name = (
+                    st_row.get("display_name")
+                    or st_row.get("preferred_name")
+                    or st_row.get("first_name")
+                    or None
+                )
+                if preferred_name is not None:
+                    preferred_name = str(preferred_name).strip() or None
+                    if preferred_name and preferred_name.lower().startswith("stu_"):
+                        preferred_name = None
         except Exception:
             grade_val = None
+            preferred_name = None
 
         # Build short context from this session only
         history = self.store.list_messages(session_id)
@@ -1169,6 +1182,7 @@ class StudyService:
                     ),
                     duration_limit_sec=int(session.duration_limit_sec or 0),
                     season_note=_season_note_safe(),
+                    student_preferred_name=preferred_name,
                 ),
             }
         ]

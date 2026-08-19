@@ -897,12 +897,26 @@ def teacher_system_prompt(
     season_note: str | None = None,
     teaching_style: str | None = None,
     practice_complete: bool = False,
+    student_preferred_name: str | None = None,
 ) -> str:
     name = TEACHER_NAMES.get(teacher_key, "your AI teacher")
     subject = SUBJECT_LABELS.get(subject_key, subject_key)
     track = f" (focus: {subject_track})" if subject_track else ""
     grade_s = str(grade) if grade else "unknown"
     mode_s = mode or "lesson"
+    # Friendly name only — never student_id or internal codes
+    preferred = (student_preferred_name or "").strip()
+    if preferred and len(preferred) <= 40 and not preferred.lower().startswith("stu_"):
+        name_block = (
+            f"Student preferred name: {preferred}.\n"
+            f"Address them as {preferred} occasionally; mostly use “you”. "
+            "Never say student ids, account numbers, or internal codes."
+        )
+    else:
+        name_block = (
+            "Student preferred name: (not set).\n"
+            "Use “you” only. Do not invent a name. Never say student ids or internal codes."
+        )
     prior = (prior_recap or "").strip()
     if prior:
         prior_block = (
@@ -930,6 +944,7 @@ def teacher_system_prompt(
 Subject: {subject}{track}.
 Student grade: {grade_s} (if unknown, teach like grade 5–6: simple words).
 Mode: {mode_s}. Plan: {plan_tier or "unknown"}.
+{name_block}
 {addon_block}
 {theme_block}
 {style_block}
