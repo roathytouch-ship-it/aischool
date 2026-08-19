@@ -1957,9 +1957,15 @@
       <input id="priceSilver" type="number" min="0" step="0.5" value="8" style="width:100%;padding:10px;border-radius:8px;border:1px solid #cbd5e1;margin-bottom:8px" />
       <label style="font-size:12px;color:var(--tg-hint)">Gold</label>
       <input id="priceGold" type="number" min="0" step="0.5" value="18" style="width:100%;padding:10px;border-radius:8px;border:1px solid #cbd5e1;margin-bottom:8px" />
-      <label style="font-size:12px;color:var(--tg-hint);display:block;margin-bottom:6px">Subject Pass prices (USD / subject / month)</label>
-      <div id="adminPassPriceList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
-      <button class="btn-primary" type="button" onclick="saveAdminPrices()">Save prices</button>
+    </div>
+
+    <div class="summary-card" style="margin-top:14px">
+      <h4 style="font-size:14px;margin-bottom:8px">Subject Pass prices (per subject)</h4>
+      <p style="font-size:12px;color:var(--tg-hint);margin-bottom:10px">
+        Basic only · USD / subject / month · each subject can have its own price · saved in this browser (demo)
+      </p>
+      <div id="adminPassPriceList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+      <button class="btn-primary" type="button" onclick="saveAdminPrices()">Save all prices</button>
     </div>
 
     <button class="btn-secondary" style="margin-top:16px" onclick="goBack()">← Back to Profile</button>
@@ -3845,6 +3851,7 @@
       const pg = document.getElementById('priceGold');
       if (ps) ps.value = prices.silver != null ? prices.silver : 8;
       if (pg) pg.value = prices.gold != null ? prices.gold : 18;
+      fillAdminPassPriceInputs();
     }
     function saveAdminPrices() {
       const cfg = loadAdminConfig();
@@ -3862,7 +3869,8 @@
       SUBJECT_PASS_PRICES = Object.assign({}, SUBJECT_PASS_PRICES, passBySubject);
       saveAdminConfig(cfg);
       applyAdminPricesToUI();
-      showToast('Prices saved (demo)');
+      if (typeof refreshStudentEnrollUI === 'function') refreshStudentEnrollUI();
+      showToast('Prices saved · per-subject Pass updated (demo)');
     }
     // Apply admin visibility on load
     document.addEventListener('DOMContentLoaded', function () {
