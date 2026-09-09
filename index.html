@@ -313,6 +313,17 @@
       padding: 12px 14px; user-select: none;
     }
     .lesson-plan-header h3 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .lp-kicker { font-size: 11px; color: #64748b; margin: 0 0 8px; }
+    .lp-glimpse {
+      margin: 10px 0; padding: 10px 12px; border-radius: 12px;
+      background: #f8fafc; border: 1px solid #e2e8f0;
+    }
+    .lp-glimpse-label { font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 6px; }
+    .lp-glimpse p { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
+    .lp-glimpse p:last-child { margin-bottom: 0; }
+    .week-card { margin-bottom: 12px; }
+    .week-card h3 { font-size: 15px; }
+    .week-meta { font-size: 11px; color: #64748b; margin-bottom: 6px; }
     .lesson-plan-body { display: block; padding: 0 14px 14px; font-size: 13px; line-height: 1.5; color: #334155; }
     .lesson-plan-body ul { margin: 8px 0 0 16px; }
     .lesson-plan-body li { margin-bottom: 4px; }
@@ -2113,16 +2124,22 @@
       <div class="learn-pane" id="panePlan">
         <div class="lesson-plan" id="lessonPlan">
           <div class="lesson-plan-header">
-            <h3 id="lessonPlanTitle">📋 Lesson Plan · Fractions Word Problems</h3>
+            <h3 id="lessonPlanTitle">📋 Lesson Plan · Today</h3>
           </div>
           <div class="lesson-plan-body">
-            <strong>Goal:</strong> Solve multi-step fraction word problems using common denominators.
-            <ul>
-              <li>Review common denominators (quick)</li>
-              <li>Practice 3–4 word problems together</li>
-              <li>Independent try + feedback</li>
-              <li>Optional: mixed numbers</li>
-            </ul>
+            <div id="lessonPlanRich">
+              <p class="lp-kicker" id="lpWhen">Built at Start · reread anytime this week</p>
+              <p><strong>Today:</strong> <span id="lpToday">One skill for this block — filled when you Start.</span></p>
+              <p><strong>Why it shows up:</strong> <span id="lpWhy">A short school-useful reason.</span></p>
+              <p><strong>How we’ll work:</strong> <span id="lpHow">You try first. Teacher marks once. Then one tighter item if time.</span></p>
+              <div class="lp-glimpse" id="lpGlimpseBox">
+                <div class="lp-glimpse-label">Glimpse · try these in Live</div>
+                <p id="lpG1">1. First problem shape appears when the lesson starts.</p>
+                <p id="lpG2">2. Second problem is a close cousin or a small trap.</p>
+              </div>
+              <p><strong>Watch-out:</strong> <span id="lpWatch">One trap, one line.</span></p>
+              <p><strong>Close:</strong> <span id="lpClose">End saves Did · Strength · Next from today’s chat only.</span></p>
+            </div>
             <div class="suken-area-box" id="sukenAreaBox">
               <div class="suken-area-label" id="sukenAreaLabel">Grade 10 · practice areas</div>
               <div class="suken-area-chips" id="sukenAreaChips"></div>
@@ -2224,22 +2241,24 @@
           </div>
           <div class="math-signs" id="mathSignsRow" hidden>
             <span class="math-signs-label">Signs</span>
-            <button type="button" class="math-sign" onclick="insertMathSign('+')">+</button>
-            <button type="button" class="math-sign" onclick="insertMathSign('−')">−</button>
-            <button type="button" class="math-sign" onclick="insertMathSign('×')">×</button>
-            <button type="button" class="math-sign" onclick="insertMathSign('÷')">÷</button>
-            <button type="button" class="math-sign" onclick="insertMathSign('=')">=</button>
-            <button type="button" class="math-sign" onclick="insertMathSign('/')">/</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('Σ')">Σ</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('σ')">σ</button>
+            <button type="button" class="math-sign" onclick="insertMathSnippet('f()', 2)">f()</button>
+            <button type="button" class="math-sign" onclick="insertMathSnippet('log()', 4)">log</button>
             <button type="button" class="math-sign" onclick="insertMathSign('√')">√</button>
             <button type="button" class="math-sign" onclick="insertMathSign('²')">²</button>
             <button type="button" class="math-sign" onclick="insertMathSign('³')">³</button>
-            <button type="button" class="math-sign" onclick="insertMathSign('^')">^</button>
-            <button type="button" class="math-sign" onclick="insertMathSign('½')">½</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('π')">π</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('°')">°</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('θ')">θ</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('∠')">∠</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('△')">△</button>
             <button type="button" class="math-sign" onclick="insertMathSign('≤')">≤</button>
             <button type="button" class="math-sign" onclick="insertMathSign('≥')">≥</button>
             <button type="button" class="math-sign" onclick="insertMathSign('≠')">≠</button>
-            <button type="button" class="math-sign" onclick="insertMathSign('π')">π</button>
-            <button type="button" class="math-sign" onclick="insertMathSign('°')">°</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('±')">±</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('≈')">≈</button>
+            <button type="button" class="math-sign" onclick="insertMathSign('∞')">∞</button>
           </div>
           <div class="chat-input-area">
             <!-- Hidden camera input — triggered from Photo control above -->
@@ -2277,12 +2296,19 @@
 
   <div class="screen" id="screen-progress">
     <div class="section-title">Learning Journal</div>
-    <div class="summary-card">
-      <h3>📝 Session Summary · Today</h3>
-      <p><strong>Subject:</strong> General Math – Fractions</p>
-      <p>Today we practiced fraction word problems. You solved 5 out of 6 correctly. You improved on finding common denominators.</p>
-      <p><strong>Strength:</strong> Clear step-by-step thinking</p>
-      <p><strong>Next:</strong> Mixed number word problems</p>
+    <p class="week-meta">This week (7 days) · plans + recaps. Month list later. Daily rows stay for the term.</p>
+    <div class="summary-card week-card">
+      <div class="week-meta">Today · current plan</div>
+      <h3>📋 Lesson plan · General Math</h3>
+      <p><strong>Today:</strong> Two-step fraction word problems (of a leftover amount).</p>
+      <p><strong>Glimpse:</strong> Lisa had 3/4 pizza and gave 1/3 of what she had away. How much is left?</p>
+      <p class="week-meta">Replaced the next time you Start Math. Kept here 7 days.</p>
+    </div>
+    <div class="summary-card week-card">
+      <h3>📝 Recap · Today · General Math</h3>
+      <p><strong>Did:</strong> Two-step fraction leftovers — 3/4 then 1/3 of what she had.</p>
+      <p><strong>Strength:</strong> You named the whole before taking the part.</p>
+      <p><strong>Weak / Next:</strong> “Of what she had” vs “of the whole” — one more mixed item next time.</p>
       <div class="summary-khmer">
         <strong>សង្ខេបមេរៀន</strong><br>
         ថ្ងៃនេះយើងបានអនុវត្តបញ្ហាពាក្យប្រភាគ។ ប្អូនបានដោះស្រាយបាន ៥ លើ ៦។ ប្អូនមានការរីកចម្រើនក្នុងការរកភាគតូចរួម។
@@ -3016,23 +3042,19 @@
   <div class="recap-overlay" id="recapOverlay">
     <div class="recap-card">
       <h2>Session Complete 🎉</h2>
-      <div class="sub">Short recap · Optional practice (not a test)</div>
-      <div class="practice-q">
-        <label>1. Lisa had 3/4 pizza and gave 1/3 of it away. How much is left?</label>
-        <input type="text" placeholder="Your answer..." id="q1" />
-        <div class="edit-hint">You can edit this later in Journal</div>
+      <div class="sub" id="recapSub">Today’s recap · on-topic only</div>
+      <p><strong>Did:</strong> <span id="recapDid">What you practiced in this block.</span></p>
+      <p><strong>Strength:</strong> <span id="recapStrength">One thing you did well on that skill.</span></p>
+      <p><strong>Weak / Next:</strong> <span id="recapNext">One concrete next step — not off-topic chat.</span></p>
+      <div class="summary-khmer" id="recapKmBox" style="margin-top:10px">
+        <strong>សង្ខេបមេរៀន</strong><br>
+        <span id="recapKm">Khmer line for parents when the recap is ready.</span>
       </div>
-      <div class="practice-q">
-        <label>2. What is the first step when fractions have different denominators?</label>
-        <input type="text" placeholder="Your answer..." id="q2" />
-        <div class="edit-hint">You can edit this later in Journal</div>
+      <div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
+        <button type="button" class="recap-btn" onclick="copyRecapCard()">📋 Copy recap</button>
+        <button type="button" class="recap-btn" onclick="downloadRecapHtml()" style="background:#ecfdf5;color:#047857;border-color:#6ee7b7">⬇ Download .html</button>
       </div>
-      <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap">
-        <button type="button" class="recap-btn" onclick="copySessionTranscript()">📋 Copy transcript</button>
-        <button type="button" class="recap-btn" onclick="downloadSessionTranscript()" style="background:#ecfdf5;color:#047857;border-color:#6ee7b7">⬇ Download .txt</button>
-      </div>
-      <button class="btn-primary" onclick="finishRecap()">Save & View Summary</button>
-      <button class="btn-secondary" onclick="skipRecap()">Skip practice</button>
+      <button class="btn-primary" onclick="finishRecap()">Save & View Journal</button>
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0">
         <div style="font-size:12px;color:var(--tg-hint);margin-bottom:8px">Subject finished · switch only from Home after End</div>
         <button type="button" class="btn-primary" style="background:#0f766e" onclick="goHomeAfterLesson()">🏠 Home — pick another subject</button>
@@ -3356,7 +3378,7 @@
     // Prod:   https://api.yourdomain.com
     // Empty string = demo mode (no network; UI stays local-only)
     // =====================================================================
-    const API_BASE = 'http://127.0.0.1:8080'; // '' = pure demo UI; set for local API
+    const API_BASE = 'https://aischool-2pd1.onrender.com'; // Render cloud API; local was http://127.0.0.1:8080
 
     const Api = {
       accessToken: null,
@@ -5985,6 +6007,7 @@
       showScreen('chat', null, { push: true });
       const pt = document.getElementById('lessonPlanTitle');
       if (pt) pt.textContent = '📋 Lesson Plan · ' + subject;
+      try { renderTodayLessonPlan(subject); } catch (e) {}
       try { renderSukenAreaChips(); } catch (e) {}
       const ltn = document.getElementById('liveTeacherName');
       if (ltn) ltn.textContent = teacher + ' · ' + subject;
@@ -7999,7 +8022,7 @@
         practice: { label: 'Run it again', text: 'Run it again — same goal, one working step this block. Wait for my try. Do not dump a full program.' },
         hint: { label: 'Hint', text: 'One short Hint about the bug or next step — not the full fix. Then wait for me to try.' },
         skip: { label: 'Skip this', text: 'Skip this step — do not mark it wrong. Same block goal. Give one new working step now. If this felt too easy, raise the challenge a little. No full program dump. Wait for my try.' },
-        topic: { label: 'New task', text: 'List every Coding theme for this sub-subject from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not paste a full solution.' }
+        topic: { label: 'New topic', text: 'List every Coding theme for THIS sub-subject only (Scratch / Python / Web / App / Game / Basic Coding — whichever I started). Number them 1…N from the Coding theme bank. Wait for me to pick. Do not invent extra themes. Do not list AI & Robot / sensor / motor / microcontroller themes. Do not paste a full solution. Do not start the next step until I pick a number.' }
       },
       ai_and_robot: {
         show: true,
@@ -8052,9 +8075,19 @@
       }
       if (input) {
         input.placeholder = on
-          ? 'Type 1/2 or x^2, or tap a sign…'
+          ? 'Type + − × ÷ = as usual, or tap a sign…'
           : 'Type or hold mic to speak...';
       }
+    }
+        function insertMathSnippet(text, cursorIn) {
+      var input = document.getElementById('chatInput');
+      if (!input || !text) return;
+      var start = input.selectionStart != null ? input.selectionStart : input.value.length;
+      var end = input.selectionEnd != null ? input.selectionEnd : input.value.length;
+      input.value = input.value.slice(0, start) + text + input.value.slice(end);
+      var pos = start + (cursorIn != null ? cursorIn : text.length);
+      input.focus();
+      try { input.setSelectionRange(pos, pos); } catch (e) {}
     }
     function insertMathSign(ch) {
       var input = document.getElementById('chatInput');
@@ -8065,6 +8098,95 @@
       var pos = start + String(ch).length;
       input.focus();
       try { input.setSelectionRange(pos, pos); } catch (e) {}
+    }
+
+    var LESSON_PLAN_BANK = {
+      'General Math': {
+        today: 'Two-step fraction word problems (of a leftover amount).',
+        why: 'Same shape as sharing food, recipes, and school word problems — not just 1/2 of 8.',
+        how: 'You try first. Alex marks once. Then one tighter item if time.',
+        g1: 'Lisa had 3/4 of a pizza and gave 1/3 of what she had away. How much pizza is left?',
+        g2: 'A tank is 2/5 full. You add 1/4 of the tank. Is it more than half? How do you know?',
+        watch: '“Of what she had” is not the same as “of the whole.”',
+        close: 'End names the fraction move you could do and the one mix-up still open.'
+      },
+      'Special Math': {
+        today: 'Contest-shaped items in this track — one idea family, original stems only.',
+        why: 'Papers reward a deciding move, not a long lecture.',
+        how: 'Working first. Dr. Nova marks once. Next item stays in this track.',
+        g1: 'Glimpse: a short stem with one trap option. Write the first step, not a full proof.',
+        g2: 'Glimpse: same idea in a smaller case. What stays the same when the numbers change?',
+        watch: 'Do not hunt for an official year paper. Original item, same flavour.',
+        close: 'End names the item shape and the move to reuse next time.'
+      },
+      'Scholarship Prep': {
+        today: 'Paper-shaped items in this scholarship track (English / Math / Thinking).',
+        why: 'School-entry papers use multi-step stems and one attractive wrong option.',
+        how: 'You send the exam-form answer. Nadia marks once — never “right” then flip.',
+        g1: 'A jacket is $80. It is 25% off, then 10% tax. What do you pay?',
+        g2: 'Which is bigger: 20% off $50, or $12 off $50? Why might someone pick the wrong one?',
+        watch: '“Of” and “off” are different moves. Options hide the right letter until you answer in Live.',
+        close: 'End names the paper move you used and the trap that still caught you.'
+      },
+      'Exam Preparation': {
+        today: 'One paper skill in this exam track — original item, not an official booklet.',
+        why: 'Marks come from the paper shape (letter / T-F-NG / short working), not a chatty paragraph.',
+        how: 'One item per reply. Sophia marks once, then a scoring Tip.',
+        g1: 'Glimpse: a short stem or 4-line passage. Answer in exam form.',
+        g2: 'Glimpse: same skill, slightly tighter wording.',
+        watch: 'No official band or total. Ready on this item shape only.',
+        close: 'End names the paper part you practiced and the next part.'
+      },
+      'General English': {
+        today: 'One usable skill for your grade — a short real line you can say or write.',
+        why: 'General English is classroom-survival English, not Advanced literature.',
+        how: 'You try a line. Emma marks the meaning, then one rewrite.',
+        g1: 'Glimpse: say or type one clear sentence for today’s skill.',
+        g2: 'Glimpse: change one word and keep the meaning.',
+        watch: 'Do not wait for a grammar lecture. One move per lesson.',
+        close: 'End names the line you can now use and the weak bit to recycle.'
+      },
+      'Advanced English': {
+        today: 'One level skill (this Advanced English level) — richer language, still one focus.',
+        why: 'Level sets the height; grade still scales the sentence load.',
+        how: 'You write or speak first. Ms. Claire marks meaning and form once.',
+        g1: 'Glimpse: one short model line at this level. Rewrite it in your words.',
+        g2: 'Glimpse: same idea with one tighter clause.',
+        watch: 'No soft-agree on a broken sentence.',
+        close: 'End names the language move and the next stretch in this level.'
+      }
+    };
+    function lessonPlanForSubject(subject) {
+      var s = String(subject || currentSubject || '');
+      var keys = Object.keys(LESSON_PLAN_BANK);
+      for (var i = 0; i < keys.length; i++) {
+        if (s.indexOf(keys[i]) !== -1) return LESSON_PLAN_BANK[keys[i]];
+      }
+      return {
+        today: 'One focus for this block, matched to this subject.',
+        why: 'So you can reopen this card later and still see what today’s work was.',
+        how: 'Try in Live lesson. Teacher marks once.',
+        g1: 'Glimpse 1 will match this subject when Start is live.',
+        g2: 'Glimpse 2 is a close cousin, not a new topic.',
+        watch: 'The plan does not print the final answer.',
+        close: 'End saves Did · Strength · Next from the chat only.'
+      };
+    }
+    function renderTodayLessonPlan(subject) {
+      var plan = lessonPlanForSubject(subject);
+      function set(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = val;
+      }
+      set('lpToday', plan.today);
+      set('lpWhy', plan.why);
+      set('lpHow', plan.how);
+      set('lpG1', '1. ' + plan.g1);
+      set('lpG2', '2. ' + plan.g2);
+      set('lpWatch', plan.watch);
+      set('lpClose', plan.close);
+      var when = document.getElementById('lpWhen');
+      if (when) when.textContent = 'Today’s card · keep 7 days on Journal · new Start replaces it';
     }
     function updateQuickActRow() {
       const row = document.getElementById('quickActRow');
@@ -8636,6 +8758,72 @@
       return buildTranscriptFromDom();
     }
 
+
+    function recapPlainText() {
+      var sub = (typeof currentSubject !== 'undefined' && currentSubject) ? currentSubject : 'Lesson';
+      var did = (document.getElementById('recapDid') || {}).textContent || '';
+      var st = (document.getElementById('recapStrength') || {}).textContent || '';
+      var nx = (document.getElementById('recapNext') || {}).textContent || '';
+      var km = (document.getElementById('recapKm') || {}).textContent || '';
+      return 'AI School recap\n' + sub + '\n\nDid: ' + did + '\nStrength: ' + st + '\nWeak / Next: ' + nx + '\n\nKM: ' + km + '\n';
+    }
+    function fillRecapCard(recap) {
+      recap = recap || {};
+      function set(id, val, fallback) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var v = (val == null || String(val).trim() === '') ? fallback : String(val);
+        el.textContent = v;
+      }
+      var summary = recap.summary_en || recap.did || '';
+      set('recapDid', recap.did || summary, 'What you practiced in this block.');
+      set('recapStrength', recap.strength, 'One thing you did well on that skill.');
+      set('recapNext', recap.next || recap.weak_next, 'One concrete next step — not off-topic chat.');
+      set('recapKm', recap.summary_km || recap.km, 'Khmer line for parents when the recap is ready.');
+      var sub = document.getElementById('recapSub');
+      if (sub) sub.textContent = (currentSubject || 'Lesson') + ' · today’s recap';
+    }
+    async function copyRecapCard() {
+      try {
+        var text = recapPlainText();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        showToast('Recap copied');
+      } catch (e) {
+        showToast('Could not copy recap');
+      }
+    }
+    function downloadRecapHtml() {
+      var sub = (typeof currentSubject !== 'undefined' && currentSubject) ? currentSubject : 'Lesson';
+      var did = (document.getElementById('recapDid') || {}).textContent || '';
+      var st = (document.getElementById('recapStrength') || {}).textContent || '';
+      var nx = (document.getElementById('recapNext') || {}).textContent || '';
+      var km = (document.getElementById('recapKm') || {}).textContent || '';
+      var day = new Date().toISOString().slice(0, 10);
+      var html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>AI School recap · ' +
+        sub.replace(/</g,'') + '</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:24px auto;padding:0 16px;color:#0f172a;line-height:1.5}h1{font-size:1.25rem}.km{background:#f1f5f9;padding:12px;border-radius:12px;margin-top:16px}</style></head><body><h1>AI School recap</h1><p>' +
+        day + ' · ' + sub.replace(/</g,'') + '</p><p><strong>Did:</strong> ' + did.replace(/</g,'') + '</p><p><strong>Strength:</strong> ' +
+        st.replace(/</g,'') + '</p><p><strong>Weak / Next:</strong> ' + nx.replace(/</g,'') + '</p><div class="km"><strong>សង្ខេបមេរៀន</strong><br>' +
+        km.replace(/</g,'') + '</div></body></html>';
+      var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'aischool-recap-' + day + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Recap downloaded · HTML');
+    }
     async function copySessionTranscript() {
       try {
         const text = await fetchTranscriptText();
@@ -8815,6 +9003,7 @@
       if (Api.isConfigured() && Api.activeSessionId) {
         try {
           const data = await Api.endSession();
+          try { fillRecapCard(data && data.recap); } catch (err) {}
           const sum = (data.recap && data.recap.summary_en) || '';
           if (sum) showToast(sum.slice(0, 120));
         } catch (e) {

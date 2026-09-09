@@ -199,30 +199,34 @@ ADVANCED_ENGLISH_THEMES: dict[str, list[dict]] = {
 
 CODING_THEMES: dict[str, list[dict]] = {
     "Basic Coding": [
-        {"theme": "What is a step-by-step instruction (algorithm idea)", "grades": (4, 9)},
-        {"theme": "Sequence — order matters", "grades": (4, 10)},
-        {"theme": "Simple decisions: if this, then that (no heavy syntax)", "grades": (4, 10)},
-        {"theme": "Repeat a step (loop idea with counting)", "grades": (4, 10)},
-        {"theme": "Debug a wrong order of steps", "grades": (4, 12)},
-        {"theme": "Tiny plan: input → process → output", "grades": (5, 12)},
+        {"theme": "Write a recipe as numbered program steps (homework / score — not a robot)", "grades": (4, 9)},
+        {"theme": "Order in a script: why line 1 must run before line 2", "grades": (4, 10)},
+        {"theme": "If / else as a password or quiz rule (then one tiny snippet)", "grades": (4, 10)},
+        {"theme": "Repeat with a counter: print 1 to 5 or add a score 3 times", "grades": (4, 10)},
+        {"theme": "Debug a mixed-up script: find the wrong line", "grades": (4, 12)},
+        {"theme": "input → calculate → print (greeter or mini calculator — computer only)", "grades": (5, 12)},
+        {"theme": "Name a variable so the program remembers one value", "grades": (5, 11)},
     ],
     "Learning Scratch": [
-        {"theme": "Sprites, stage, and one motion block", "grades": (4, 8)},
-        {"theme": "Events: when green flag / when clicked", "grades": (4, 9)},
-        {"theme": "Looks and simple animation", "grades": (4, 8)},
-        {"theme": "Loops in Scratch (repeat / forever carefully)", "grades": (4, 9)},
-        {"theme": "If touching / simple condition", "grades": (5, 10)},
-        {"theme": "Variables as a score or counter", "grades": (5, 10)},
-        {"theme": "Short story or interactive scene (few sprites)", "grades": (4, 9)},
+        {"theme": "Sprite + stage: one character, one motion block", "grades": (4, 8)},
+        {"theme": "Green flag / when clicked events", "grades": (4, 9)},
+        {"theme": "Looks, say, and a short animation", "grades": (4, 8)},
+        {"theme": "Repeat / forever on the sprite (not a physical robot)", "grades": (4, 9)},
+        {"theme": "If touching color or sprite — a game rule", "grades": (5, 10)},
+        {"theme": "Score variable on screen", "grades": (5, 10)},
+        {"theme": "Two-sprite chat or a 10-second scene", "grades": (4, 9)},
+        {"theme": "Broadcast: one sprite tells another to start", "grades": (6, 10)},
     ],
     "Learning Python": [
-        {"theme": "Variables and simple types (int, str)", "grades": (6, 12)},
-        {"theme": "print and input — tiny interactive script", "grades": (6, 12)},
-        {"theme": "if / elif / else with clear conditions", "grades": (6, 12)},
-        {"theme": "for or while loop — one clear goal", "grades": (7, 12)},
-        {"theme": "Lists — store and read a few items", "grades": (7, 12)},
-        {"theme": "Tiny function — one job, return or print", "grades": (8, 12)},
-        {"theme": "Read an error message and fix one bug", "grades": (6, 12)},
+        {"theme": "Variables: int and str in a 4-line script", "grades": (6, 12)},
+        {"theme": "print and input — greet by name", "grades": (6, 12)},
+        {"theme": "if / elif / else — password or grade band", "grades": (6, 12)},
+        {"theme": "for or while — one clear print or sum", "grades": (7, 12)},
+        {"theme": "Lists — store three items and read one", "grades": (7, 12)},
+        {"theme": "def one function — one job", "grades": (8, 12)},
+        {"theme": "Read a traceback and fix one bug", "grades": (6, 12)},
+        {"theme": "Tiny text menu: 1 add / 2 quit", "grades": (8, 12)},
+        {"theme": "String slice or f-string in one useful line", "grades": (8, 12)},
     ],
     "Web Development": [
         {"theme": "HTML page skeleton — headings and paragraphs", "grades": (7, 12)},
@@ -241,12 +245,13 @@ CODING_THEMES: dict[str, list[dict]] = {
         {"theme": "Tiny feature end-to-end (no full store app)", "grades": (8, 12)},
     ],
     "Game Development": [
-        {"theme": "Player, goal, and win/lose rule", "grades": (5, 12)},
-        {"theme": "Move on input (keyboard or tap idea)", "grades": (5, 12)},
-        {"theme": "Collision or catch idea (simple)", "grades": (6, 12)},
-        {"theme": "Score counter", "grades": (6, 12)},
-        {"theme": "One level loop: start → play → end", "grades": (6, 12)},
-        {"theme": "Polish one feel (speed, difficulty step)", "grades": (7, 12)},
+        {"theme": "Player, goal, and win/lose rule in Scratch or code", "grades": (5, 12)},
+        {"theme": "Move on key or tap (sprite or tiny script)", "grades": (5, 12)},
+        {"theme": "Catch / miss rule (score changes)", "grades": (6, 12)},
+        {"theme": "Score counter variable", "grades": (6, 12)},
+        {"theme": "Level loop: start → play → win/lose text", "grades": (6, 12)},
+        {"theme": "Make it a bit harder (speed or extra rule)", "grades": (7, 12)},
+        {"theme": "A 20-second mini-game plan, then one working piece", "grades": (7, 12)},
     ],
 }
 
@@ -1396,13 +1401,18 @@ Tired / several misses → easier item or rest — not “enough for today.” N
 
     if key in ("coding",):
         return f"""
-SUBJECT FOCUS — Coding:{track_bit}
+SUBJECT FOCUS — Coding (teacher Codey — NOT Calliope, NOT AI & Robot):{track_bit}
+- You teach SOFTWARE: Scratch blocks, Python, HTML/CSS, app screens, or game rules in code.
+- HARD WALL: do not teach sensors, motors, circuits, microcontrollers, robot wander/avoid, or “the robot decides.” That is AI & Robot. If they ask for a robot, one line: “That’s Calliope’s class — here we write programs on the computer,” then a coding try.
+- Name yourself Codey. Never use 🤖 📡 ⚙️ 🔋 🛞 robot flows.
 - REPLY SHAPE: one working step per reply. Never three coding tasks in one bubble.
 - Text-first: tiny snippets, one concept per try.
 - Ask the student to type or describe code; then correct one thing at a time.
 - Never dump a whole app or long program in one reply.
 - Treat errors as learning: read the problem → fix one step.
 - Little storytelling while debugging; keep focus on the working step.
+- Track fit: Basic Coding = plain steps / no syntax dump. Scratch = blocks + sprites. Python = real short Python. Web = HTML/CSS. App = screens + one feature. Game = player/goal/score in code or clear rules — still not a physical robot.
+- Grade 8–12 default flavor if track is missing or “Basic Coding” feels too young: offer Learning Python (or Web) in one short A/B, then teach that. Do not stay on “algorithm as robot steps.”
 
 VISUAL TEACHING (when a new idea or flow needs a picture in words):
 - For program order, loops, or if/else, add **one short flow line** before or after the tiny code.
@@ -1410,7 +1420,7 @@ VISUAL TEACHING (when a new idea or flow needs a picture in words):
   - Order: input → process → output
   - Decision: condition? → yes → … / no → …
   - Loop: start → do step → check again → end
-- Optional light emoji (sparingly): ▶️ run, 🔁 loop, ❓ if, ✅ ok, ❌ bug.
+- Optional light emoji (sparingly): ▶️ run, 🔁 loop, ❓ if, ✅ ok, ❌ bug. No robot emoji.
 - Pattern: 1 plain sentence → 1 flow line → ≤15 lines code or one student try.
 - At most one visual flow per reply. No ASCII art walls. Never pretend a screenshot exists.
 
