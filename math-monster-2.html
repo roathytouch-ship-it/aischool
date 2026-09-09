@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>⚔️ Math Monster 2 — Grades 9–12</title>
+    <style>
+        /* ===== RESET & BASE ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0b0e14;
+            color: #e8edf5;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            margin: 0;
+            background-image: radial-gradient(ellipse at 30% 20%, #1a2332 0%, #0b0e14 80%);
+        }
+        /* ===== CONTAINER ===== */
+        .arena {
+            max-width: 720px;
+            width: 100%;
+            background: rgba(18, 25, 38, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(100, 160, 255, 0.12);
+            border-radius: 32px;
+            padding: 24px 20px 28px;
+            box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            transition: all 0.2s;
+        }
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            margin-bottom: 18px;
+        }
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #f0c060, #f5a623);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .title span {
+            font-size: 1.6rem;
+            -webkit-text-fill-color: initial;
+            color: #f5a623;
+        }
+        .stats {
+            display: flex;
+            gap: 14px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 6px 14px 6px 16px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .stats .stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #9bb0d0;
+        }
+        .stats .stat b {
+            color: #e8edf5;
+            font-weight: 600;
+            min-width: 20px;
+        }
+        .stat.score b {
+            color: #f5c542;
+        }
+        .stat.streak b {
+            color: #6fcf97;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-wrap {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4a7cf7, #6c5ce7, #a855f7);
+            border-radius: 12px;
+            transition: width 0.35s ease;
+        }
+        .progress-label {
+            position: absolute;
+            right: 4px;
+            top: -16px;
+            font-size: 0.6rem;
+            color: #6a7f9f;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===== FILTER BAR ===== */
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            margin-bottom: 18px;
+            align-items: center;
+        }
+        .filters select,
+        .filters button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            color: #c8d6e8;
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            outline: none;
+            font-family: inherit;
+        }
+        .filters select:hover,
+        .filters button:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .filters select:focus,
+        .filters button:focus {
+            border-color: #4a7cf7;
+        }
+        .filters select option {
+            background: #1a2332;
+            color: #e8edf5;
+        }
+        .filter-label {
+            font-size: 0.7rem;
+            color: #6a7f9f;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .reset-btn {
+            margin-left: auto;
+            background: rgba(244, 67, 54, 0.15) !important;
+            border-color: rgba(244, 67, 54, 0.25) !important;
+            color: #f56a6a !important;
+        }
+        .reset-btn:hover {
+            background: rgba(244, 67, 54, 0.25) !important;
+        }
+
+        /* ===== QUESTION CARD ===== */
+        .question-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 22px 18px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 16px;
+            min-height: 140px;
+            transition: 0.25s;
+        }
+        .q-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #6a7f9f;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 10px;
+        }
+        .q-meta .topic {
+            background: rgba(74, 124, 247, 0.15);
+            padding: 2px 12px;
+            border-radius: 30px;
+            color: #7aafff;
+        }
+        .q-meta .difficulty {
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        .difficulty.easy {
+            background: rgba(46, 204, 113, 0.15);
+            color: #6fcf97;
+        }
+        .difficulty.medium {
+            background: rgba(241, 196, 15, 0.15);
+            color: #f5c542;
+        }
+        .difficulty.hard {
+            background: rgba(231, 76, 60, 0.15);
+            color: #f56a6a;
+        }
+        .difficulty.expert {
+            background: rgba(155, 89, 182, 0.2);
+            color: #bb86fc;
+        }
+
+        .q-text {
+            font-size: 1.25rem;
+            font-weight: 500;
+            line-height: 1.6;
+            color: #eef4ff;
+            padding: 6px 0 4px;
+            word-break: break-word;
+        }
+        .q-text .math {
+            font-family: 'Cambria', 'Times New Roman', serif;
+            font-style: italic;
+        }
+        .q-number {
+            font-size: 0.75rem;
+            color: #4a6a8a;
+            font-weight: 400;
+            margin-right: 6px;
+        }
+
+        /* ===== OPTIONS ===== */
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0 4px;
+        }
+        @media (max-width: 480px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+        }
+        .opt-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 12px 14px;
+            color: #d6e2f5;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.18s;
+            text-align: left;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .opt-btn .label {
+            display: inline-block;
+            min-width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #6a7f9f;
+            flex-shrink: 0;
+        }
+        .opt-btn:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
+        }
+        .opt-btn.correct {
+            background: rgba(46, 204, 113, 0.18);
+            border-color: #2ecc71;
+            color: #6fcf97;
+        }
+        .opt-btn.correct .label {
+            background: #2ecc71;
+            color: #fff;
+        }
+        .opt-btn.wrong {
+            background: rgba(231, 76, 60, 0.18);
+            border-color: #e74c3c;
+            color: #f56a6a;
+        }
+        .opt-btn.wrong .label {
+            background: #e74c3c;
+            color: #fff;
+        }
+        .opt-btn.disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+        .opt-btn.reveal {
+            border-color: rgba(46, 204, 113, 0.3);
+        }
+
+        /* ===== FEEDBACK & CONTROLS ===== */
+        .feedback {
+            min-height: 28px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 6px 0 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .feedback .correct-text {
+            color: #6fcf97;
+        }
+        .feedback .wrong-text {
+            color: #f56a6a;
+        }
+        .feedback .explain {
+            font-size: 0.75rem;
+            color: #6a7f9f;
+            font-weight: 400;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .controls button {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #c8d6e8;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            flex: 1 1 auto;
+            min-width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .controls button:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+        .controls button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .controls .primary {
+            background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(74, 124, 247, 0.25);
+        }
+        .controls .primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 124, 247, 0.35);
+        }
+        .controls .secondary {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .controls .danger {
+            background: rgba(244, 67, 54, 0.12);
+            border-color: rgba(244, 67, 54, 0.2);
+            color: #f56a6a;
+        }
+        .controls .danger:hover:not(:disabled) {
+            background: rgba(244, 67, 54, 0.2);
+        }
+
+        /* ===== COMPLETION ===== */
+        .complete {
+            text-align: center;
+            padding: 30px 10px 18px;
+        }
+        .complete .big-icon {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+        .complete h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f0c060, #f5a623);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .complete p {
+            color: #9bb0d0;
+            font-size: 1rem;
+            margin: 8px 0 16px;
+        }
+        .complete .final-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin: 16px 0 20px;
+        }
+        .complete .final-stats div {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 10px 22px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            min-width: 80px;
+        }
+        .complete .final-stats .num {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #e8edf5;
+        }
+        .complete .final-stats .lbl {
+            font-size: 0.65rem;
+            color: #6a7f9f;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+        }
+
+        /* ===== UTILITY ===== */
+        .hidden {
+            display: none !important;
+        }
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .gap-4 {
+            gap: 4px;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes pop {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .pop-in {
+            animation: pop 0.25s ease-out;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-6px);
+            }
+            75% {
+                transform: translateX(6px);
+            }
+        }
+        .shake {
+            animation: shake 0.3s ease;
+        }
+
+        /* ===== RESPONSIVE TWEAKS ===== */
+        @media (max-width: 500px) {
+            .arena {
+                padding: 16px 12px 20px;
+                border-radius: 24px;
+            }
+            .title {
+                font-size: 1.05rem;
+            }
+            .stats {
+                font-size: 0.7rem;
+                padding: 4px 10px 4px 12px;
+                gap: 8px;
+            }
+            .q-text {
+                font-size: 1.05rem;
+            }
+            .opt-btn {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            .controls button {
+                padding: 8px 14px;
+                font-size: 0.8rem;
+                min-width: 60px;
+            }
+            .filters select,
+            .filters button {
+                font-size: 0.65rem;
+                padding: 4px 10px;
+            }
+        }
+        @media (max-width: 380px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .stats {
+                justify-content: space-around;
+            }
+            .filters .filter-label {
+                display: none;
+            }
+            .reset-btn {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="arena" id="app">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="title">
+                <span>⚔️</span> Math Monster 2
+            </div>
+            <div class="stats">
+                <div class="stat score">🏆 <b id="scoreDisplay">0</b></div>
+                <div class="stat streak">🔥 <b id="streakDisplay">0</b></div>
+                <div class="stat">📌 <b id="qCounter">0/500</b></div>
+            </div>
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="progress-wrap">
+            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-label" id="progressLabel">0%</div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filters">
+            <span class="filter-label">🎯 Topic</span>
+            <select id="topicFilter">
+                <option value="all">All</option>
+                <option value="algebra">Algebra</option>
+                <option value="geometry">Geometry</option>
+                <option value="trigonometry">Trigonometry</option>
+                <option value="statistics">Statistics</option>
+                <option value="calculus">Calculus</option>
+                <option value="number-theory">Number Theory</option>
+                <option value="functions">Functions</option>
+            </select>
+            <span class="filter-label">📊 Difficulty</span>
+            <select id="diffFilter">
+                <option value="all">All</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+                <option value="expert">Expert</option>
+            </select>
+            <button class="reset-btn" id="resetBtn">⟳ Reset</button>
+        </div>
+
+        <!-- QUESTION AREA -->
+        <div id="questionArea">
+            <div class="question-card pop-in" id="questionCard">
+                <div class="q-meta">
+                    <span class="topic" id="qTopic">Algebra</span>
+                    <span class="difficulty easy" id="qDifficulty">Easy</span>
+                </div>
+                <div class="q-text" id="qText">
+                    <span class="q-number" id="qNum">#1</span>
+                    Solve for <i>x</i>: 3<i>x</i> + 7 = 22
+                </div>
+                <div class="options" id="optionsContainer">
+                    <button class="opt-btn" data-index="0"><span class="label">A</span> 5</button>
+                    <button class="opt-btn" data-index="1"><span class="label">B</span> 6</button>
+                    <button class="opt-btn" data-index="2"><span class="label">C</span> 7</button>
+                    <button class="opt-btn" data-index="3"><span class="label">D</span> 8</button>
+                </div>
+                <div class="feedback" id="feedback">
+                    <span id="feedbackText">Select an answer</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="secondary" id="skipBtn">⏭ Skip</button>
+                <button class="primary" id="nextBtn" disabled>Next ➜</button>
+            </div>
+        </div>
+
+        <!-- COMPLETION (hidden) -->
+        <div class="complete hidden" id="completeArea">
+            <div class="big-icon">🏁</div>
+            <h2>Arena clear!</h2>
+            <p>Made for Grades 9–12 · algebra to calc practice</p>
+            <div class="final-stats">
+                <div><div class="num" id="finalScore">0</div><div class="lbl">Correct</div></div>
+                <div><div class="num" id="finalAccuracy">0%</div><div class="lbl">Accuracy</div></div>
+                <div><div class="num" id="finalStreak">0</div><div class="lbl">Best Streak</div></div>
+            </div>
+            <button class="primary" id="restartBtn" style="margin:0 auto;padding:12px 40px;">↺ Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  MATH MONSTER — 500 QUESTION GENERATOR (G9–G12)
+        // ============================================================
+
+        (() => {
+            'use strict';
+
+            // ---------- DOM refs ----------
+            const $ = (id) => document.getElementById(id);
+            const scoreDisplay = $('scoreDisplay');
+            const streakDisplay = $('streakDisplay');
+            const qCounter = $('qCounter');
+            const progressFill = $('progressFill');
+            const progressLabel = $('progressLabel');
+            const qTopic = $('qTopic');
+            const qDifficulty = $('qDifficulty');
+            const qText = $('qText');
+            const qNum = $('qNum');
+            const optionsContainer = $('optionsContainer');
+            const feedbackText = $('feedbackText');
+            const nextBtn = $('nextBtn');
+            const skipBtn = $('skipBtn');
+            const resetBtn = $('resetBtn');
+            const restartBtn = $('restartBtn');
+            const questionArea = $('questionArea');
+            const completeArea = $('completeArea');
+            const finalScore = $('finalScore');
+            const finalAccuracy = $('finalAccuracy');
+            const finalStreak = $('finalStreak');
+            const topicFilter = $('topicFilter');
+            const diffFilter = $('diffFilter');
+
+            // ---------- State ----------
+            const TOTAL = 500;
+            let questions = [];
+            let currentIndex = 0;
+            let score = 0;
+            let streak = 0;
+            let bestStreak = 0;
+            let answered = false;
+            let answeredCorrectly = false;
+            let filterTopic = 'all';
+            let filterDiff = 'all';
+            let filteredIndices = [];
+            let currentFilteredPos = 0;
+
+            // ---------- Utility ----------
+            function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+            function randf(min, max) { return Math.random() * (max - min) + min; }
+
+            function pick(arr) { return arr[rand(0, arr.length - 1)]; }
+
+            function shuffle(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = rand(0, i);
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+
+            // ---------- Question Templates ----------
+            // Each template: { topic, difficulty, generate: () => { question, options, answer, explanation? } }
+            // options is array of 4 strings, answer is the correct option index (0-3)
+
+            const templates = [];
+
+            // ----- ALGEBRA -----
+            const algebraTemplates = [
+                // Linear equations
+                {
+                    topic: 'algebra',
+                    difficulty: 'easy',
+                    gen: () => {
+                        const a = rand(1, 12),
+                            b = rand(1, 20),
+                            c = rand(1, 30);
+                        const x = (c - b) / a;
+                        if (!Number.isInteger(x) || x < -10 || x > 30) return null;
+                        const opts = shuffle([x, x + rand(1, 5), x - rand(1, 5), x + rand(3, 8)]);
+                        const ans = opts.indexOf(x);
+                        return {
+                            q: `Solve for x: ${a}x + ${b} = ${c}`,
+                            opts: opts.map(v => `${v}`),
+                            ans,
+                            explain: `x = (${c} − ${b}) / ${a} = ${x}`
+                        };
+                    }
+                }, {
+                    topic: 'algebra',
+                    difficulty: 'easy',
+                    gen: () => {
+                        const a = rand(2, 8),
+                            b = rand(1, 15);
+                        const x = rand(-8, 12);
+                        const rhs = a * x + b;
+                        const opts = shuffle([x, x + rand(2, 6), x - rand(2, 6), rand(-5, 15)]);
+                        const ans = opts.indexOf(x);
+                        return {
+                            q: `Solve: ${a}x + ${b} = ${rhs}`,
+                            opts: opts.map(v => `${v}`),
+                            ans,
+                            explain: `x = (${rhs} − ${b}) / ${a} = ${x}`
+                        };
+                    }
+                },
+                // Quadratic equations (factorable)
+                {
+                    topic: 'algebra',
+                    difficulty: 'medium',
+                    gen: () => {
+                        const roots = [rand(-8, 8), rand(-8, 8)];
+                        while (roots[0] === roots[1]) roots[1] = rand(-8, 8);
+                        const a = 1,
+                            b = -(roots[0] + roots[1]),
+                            c = roots[0] * roots[1];
+                        const opts = shuffle([
+                            `x = ${roots[0]}, x = ${roots[1]}`,
+                            `x = ${roots[0]+1}, x = ${roots[1]-1}`,
+                            `x = ${roots[0]+2}, x = ${roots[1]+2}`,
+                            `x = ${-roots[0]}, x = ${-roots[1]}`
+                        ]);
+                        const ans = opts.indexOf(`x = ${roots[0]}, x = ${roots[1]}`);
+                        return {
+                            q: `Solve: x² ${b<0?'−':'+'} ${Math.abs(b)}x ${c<0?'−':'+'} ${Math.abs(c)} = 0`,
+                            opts,
+                            ans,
+                            explain: `(x ${roots[0]>=0?'−':'+'} ${Math.abs(roots[0])})(x ${roots[1]>=0?'−':'+'} ${Math.abs(roots[1])}) = 0`
+                        };
+                    }
+                }, {
+                    topic: 'algebra',
+                    difficulty: 'hard',
+                    gen: () => {
+                        const a = rand(2, 5),
+                            r1 = rand(-6, 6),
+                            r2 = rand(-6, 6);
+                        while (r1 === r2) r2 = rand(-6, 6);
+                        const b = -a * (r1 + r2),
+                            c = a * r1 * r2;
+                        const opts = shuffle([
+                            `x = ${r1}, x = ${r2}`,
+                            `x = ${r1+1}, x = ${r2-1}`,
+                            `x = ${-r1}, x = ${-r2}`,
+                            `x = ${r1+2}, x = ${r2+2}`
+                        ]);
+                        const ans = opts.indexOf(`x = ${r1}, x = ${r2}`);
+                        return {
+                            q: `Solve: ${a}x² ${b<0?'−':'+'} ${Math.abs(b)}x ${c<0?'−':'+'} ${Math.abs(c)} = 0`,
+                            opts,
+                            ans,
+                            explain: `Factor: ${a}(x ${r1>=0?'−':'+'} ${Math.abs(r1)})(x ${r2>=0?'−':'+'} ${Math.abs(r2)})`
+                        };
+                    }
+                },
+                // Systems of equations
+                {
+                    topic: 'algebra',
+                    difficulty: 'medium',
+                    gen: () => {
+                        const x = rand(-5, 8),
+                            y = rand(-5, 8);
+                        const a = rand(1, 5),
+                            b = rand(1, 5),
+                            c = rand(1, 5),
+                            d = rand(1, 5);
+                        const e1 = a * x + b * y,
+                            e2 = c * x + d * y;
+                        const opts = shuffle([
+                            `x=${x}, y=${y}`,
+                            `x=${x+1}, y=${y-1}`,
+                            `x=${x-2}, y=${y+2}`,
+                            `x=${-x}, y=${-y}`
+                        ]);
+                        const ans = opts.indexOf(`x=${x}, y=${y}`);
+                        return {
+                            q: `Solve: ${a}x + ${b}y = ${e1}, ${c}x + ${d}y = ${e2}`,
+                            opts,
+                            ans,
+                            explain: `Solution: x=${x}, y=${y}`
+                        };
+                    }
+                }, {
+                    topic: 'algebra',
+                    difficulty: 'hard',
+                    gen: () => {
+                        const x = rand(-4, 7),
+                            y = rand(-4, 7);
+                        const a = rand(2, 6),
+                            b = rand(2, 6),
+                            c = rand(2, 6),
+                            d = rand(2, 6);
+                        const e1 = a * x + b * y,
+                            e2 = c * x + d * y;
+                        const opts = shuffle([
+                            `(${x}, ${y})`,
+                            `(${x+1}, ${y-1})`,
+                            `(${x-2}, ${y+2})`,
+                            `(${-x}, ${-y})`
+                        ]);
+                        const ans = opts.indexOf(`(${x}, ${y})`);
+                        return {
+                            q: `Solve: ${a}x + ${b}y = ${e1}, ${c}x + ${d}y = ${e2}`,
+                            opts,
+                            ans,
+                            explain: `Solution: (${x}, ${y})`
+                        };
+                    }
+                },
+                // Inequalities
+                {
+                    topic: 'algebra',
+                    difficulty: 'easy',
+                    gen: () => {
+                        const a = rand(2, 8),
+                            b = rand(1, 20),
+                            c = rand(1, 30);
+                        const x = Math.floor((c - b) / a);
+                        const dir = pick(['>', '<']);
+                        const opts = shuffle([
+                            `x ${dir} ${x}`,
+                            `x ${dir} ${x+1}`,
+                            `x ${dir} ${x-1}`,
+                            `x ${dir === '>' ? '<' : '>'} ${x}`
+                        ]);
+                        const ans = opts.indexOf(`x ${dir} ${x}`);
+                        return {
+                            q: `Solve: ${a}x + ${b} ${dir} ${c}`,
+                            opts,
+                            ans,
+                            explain: `x ${dir} ${x}`
+                        };
+                    }
+                },
+                // Polynomial simplification
+                {
+                    topic: 'algebra',
+                    difficulty: 'medium',
+                    gen: () => {
+                        const a = rand(1, 5),
+                            b = rand(1, 5),
+                            c = rand(1, 5),
+                            d = rand(1, 5);
+                        const x = rand(-3, 3);
+                        const val = a * x * x + b * x + c;
+                        const opts = shuffle([
+                            `${val}`,
+                            `${val + rand(2, 6)}`,
+                            `${val - rand(2, 6)}`,
+                            `${val + rand(5, 12)}`
+                        ]);
+                        const ans = opts.indexOf(`${val}`);
+                        return {
+                            q: `Evaluate ${a}x² + ${b}x + ${c} when x = ${x}`,
+                            opts,
+                            ans,
+                            explain: `${a}(${x})² + ${b}(${x}) + ${c} = ${val}`
+                        };
+                    }
+                },
+                // Exponents
+                {
+                    topic: 'algebra',
+                    difficulty: 'medium',
+                    gen: () => {
+                        const base = rand(2, 5),
+                            exp = rand(2, 4);
+                        const val = Math.pow(base, exp);
+                        const opts = shuffle([
+                            `${val}`,
+                            `${val + rand(3, 10)}`,
+                            `${val - rand(3, 10)}`,
+                            `${val * 2}`
+                        ]);
+                        const ans = opts.indexOf(`${val}`);
+                        return {
+                            q: `Simplify: ${base}^${exp}`,
+                            opts,
+                            ans,
+                            explain: `${base}^${exp} = ${val}`
+                        };
+                    }
+                }, {
+                    topic: 'algebra',
+                    difficulty: 'hard',
+                    gen: () => {
+                        const b = rand(2, 4),
+                            e1 = rand(2, 4),
+                            e2 = rand(2, 4);
+                        const val = Math.pow(b, e1 + e2);
+                        const opts = shuffle([
+                            `${val}`,
+                            `${Math.pow(b, e1+e2+1)}`,
+                            `${Math.pow(b, e1+e2-1)}`,
+                            `${Math.pow(b, e1*e2)}`
+                        ]);
+                        const ans = opts.indexOf(`${val}`);
+                        return {
+                            q: `Simplify: ${b}^${e1} · ${b}^${e2}`,
+                            opts,
+                            ans,
+                            explain: `${b}^${e1} · ${b}^${e2} = ${b}^${e1+e2} = ${val}`
+                        };
+                    }
+                },
+            ];
+
+            // ----- GEOMETRY -----
+            const geometryTemplates = [
+                // Area of triangle
+                {
+                    topic: 'geometry',
+                    difficulty: 'easy',
+                    gen: () => {
+                        const b = rand(3, 12),
+                            h = rand(3, 12);
+                        const area = (b * h) / 2;
+                        const opts = shuffle([
+                            `${area}`,
+                            `${area + rand(2, 8)}`,
+                            `${area - rand(2, 8)}`,
+                            `${b * h}`
+                        ]);
+                        const ans = opts.indexOf(`${area}`);
+                        return {
+                            q: `Area of triangle with base ${b} and height ${h}`,
+                            opts,
+                            ans,
+                            explain: `A = ½·${b}·${h} = ${area}`
+                        };
+                    }
+                },
+                // Area of circle
+                {
+                    topic: 'geometry',
+                    difficulty: 'easy',
+                    gen: () => {
+                        const r = rand(2, 10);
+                        const area = Math.round(Math.PI * r * r);
+                        const opts = shuffle([
+                            `${area}`,
+                            `${area + rand(10, 30)}`,
+                            `${area - rand(10, 30)}`,
+                            `${Math.round(2 * Math.PI * r)}`
+                        ]);
+                        const ans = opts.indexOf(`${area}`);
+                        return {
+                            q: `Area of circle with radius ${r} (use π ≈ 3.14)`,
+                            opts: opts.map(v => `${v}`),
+                            ans,
+                            explain: `A = π·${r}² ≈ ${area}`
+                        };
+                    }
+                },
+                // Pythagorean theorem
+                {
+                    topic: 'geometry',
+                    difficulty: 'medium',
+                    gen: () => {
+                        const a = rand(3, 8),
+                            b = rand(3, 8);
+                        const c = Math.sqrt(a * a + b * b);
+                        if (!Number.isInteger(c)) return null;
+                        const opts = shuffle([
+                            `${c}`,
+                            `${c + rand(1, 4)}`,
+                            `${c - rand(1, 4)}`,
+                            `${a + b}`
+                        ]);
+                        const ans = opts.indexOf(`${c}`);
+                        return {
+                            q: `Right triangle legs: ${a} and ${b}. Find hypotenuse.`,
+                            opts,
+                            ans,
+                            explain: `c = √(${a}²+${b}²) = ${c}`
+                        };
+                    }
+                }, {
+                    topic: 'geometry',
+                    difficulty: 'hard',
+                    gen: () => {
+                        const c = rand(10, 20),
+                            a = rand(3, 9);
+                        const b = Math.sqrt(c * c - a * a);
+                        if (!Number.isInteger(b) || b < 1) return null;
+                        const opts = shuffle([
+                            `${b}`,
+                            `${b + rand(2, 5)}`,
+                            `${b - rand(2, 5)}`,
+                            `${c - a}`
+                        ]);
+                        const ans = opts.indexOf(`${b}`);
+                        return {
+                            q: `Right triangle hypotenuse ${c}, leg ${a}. Find other leg.`,
+                            opts,
+                            ans,
+                            explain: `b = √(${c}²−${a}²) = ${b}`
+                        };
+                    }
+                },
+                // Volume of cylinder
+                {
+                    topic: 'geometry',
+                    difficulty: 'medium',
+                    gen: () => {
+                        const r = rand(2, 6),
+                            h = rand(3, 8);
+                        const vol = Math.round(Math.PI * r * r * h);
+                        const opts = shuffle([
+                            `${vol}`,
+                            `${vol + rand(15, 40)}`,
+                            `${vol - rand(15, 40)}`,
+                            `${Math.round(2 * Math.PI * r * h)}`
+                        ]);
+                        const ans = opts.indexOf(`${vol}`);
+                        return {
+                            q: `Volume of cylinder: radius ${r}, height ${h} (π≈3.14)`,
+                            opts: opts.map(v => `${v}`),
+                            ans,
+                            explain: `V = π·${r}²·${h} ≈ ${vol}`
+                        };
+                    }
+                },
+                // Volume of sphere
+                {
+                    topic: 'geometry',
+                    difficulty: 'hard',
+                    gen: () => {
+                        const r = rand(2, 5);
+                        const vol = Math.round((4 / 3) * Math.PI * r * r * r);
+                        const opts = shuffle([
+                            `${vol}`,
+                            `${vol + rand(10, 30)}`,
+                            `${vol - rand(10, 30)}`,
+                            `${Math.round(4 * Math.PI * r * r)}`
+                        ]);
+                        const ans = opts.indexOf(`${vol}`);
+                        return {
+                            q: `Volume of sphere with radius ${r} (π≈3.14)`,
+                            opts: opts.map(v => `${v}`),
+                            ans,
+                            explain: `V = ⁴⁄₃·π·${r}³ ≈ ${vol}`
+                        };
+                    }
+                },
+                // Coordinate distance
+                {
+                    topic: 'geometry',
+                    difficulty: 'medium',
+                    gen: () => {
+                        const x1 = rand(-5, 5),
+                            y1 = rand(-5, 5),
+                            x2 = rand(-5, 5),
+                            y2 = rand(-5, 5);
+                        const d = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+                        if (!Number.isInteger(d) || d < 1) return null;
+                        const opts = shuffle([
+                            `${d}`,
+                            `${d + rand(1, 4)}`,
+                            `${d - rand(1, 4)}`,
+                            `${Math.abs(x2-x1) + Math.abs(y2-y1)}`
+                        ]);
+                        const ans = opts.indexOf(`${d}`);
+                        return {
+                            q: `Distance between (${x1},${y1}) and (${x2},${y2})`,
+                            opts,
+                            ans,
+                            explain: `d = √((${x2}−${x1})²+(${y2}−${y1})²) = ${d}`
+                        };
+                    }
+                },
+                // Slope
+                {
+                    topic: 'geometry',
+                    difficulty: 'easy',
+                    gen: () => {
+                        const x1 = rand(-4, 4),
+                            y1 = rand(-4, 4),
+                            x2 = rand(-4, 4),
+                            y2 = rand(-4, 4);
+                        if (x1 === x2) return null;
+                        const m = (y2 - y1) / (x2 - x1);
+                        if (!Number.isInteger(m)) return null;
+                        const opts = shuffle([
+                            `${m}`,
+                            `${m + rand(1, 4)}`,
+                            `${m - rand(1, 4)}`,
+                            `${-m}`
+                        ]);
+                        const ans = opts.indexOf(`${m}`);
+                        return {
+                            q: `Slope between (${x1},${y1}) and (${x2},${y2})`,
+                            opts,
+                            ans,
+                            explain: `m = (${y2}−${y1})/(${x2}−${x1}) = ${m}`
+                        };
+                    }
+                },
+            ];
+
+            // ----- TRIGONOMETRY -----
+            const trigTemplates = [{
+                topic: 'trigonometry',
+                difficulty: 'easy',
+                gen: () => {
+                    const angles = [0, 30, 45, 60, 90];
+                    const angle = pick(angles);
+                    const val = Math.sin(angle * Math.PI / 180);
+                    const rounded = Math.round(val * 100) / 100;
+                    const opts = shuffle([
+                        `${rounded}`,
+                        `${Math.round(Math.cos(angle*Math.PI/180)*100)/100}`,
+                        `${Math.round(Math.tan(angle*Math.PI/180)*100)/100}`,
+                        `${Math.round((1-val)*100)/100}`
+                    ]);
+                    const ans = opts.indexOf(`${rounded}`);
+                    return {
+                        q: `sin(${angle}°)`,
+                        opts: opts.map(v => `${v}`),
+                        ans,
+                        explain: `sin(${angle}°) = ${rounded}`
+                    };
+                }
+            }, {
+                topic: 'trigonometry',
+                difficulty: 'medium',
+                gen: () => {
+                    const angles = [0, 30, 45, 60, 90];
+                    const angle = pick(angles);
+                    const val = Math.cos(angle * Math.PI / 180);
+                    const rounded = Math.round(val * 100) / 100;
+                    const opts = shuffle([
+                        `${rounded}`,
+                        `${Math.round(Math.sin(angle*Math.PI/180)*100)/100}`,
+                        `${Math.round(Math.tan(angle*Math.PI/180)*100)/100}`,
+                        `${Math.round((1-val)*100)/100}`
+                    ]);
+                    const ans = opts.indexOf(`${rounded}`);
+                    return {
+                        q: `cos(${angle}°)`,
+                        opts: opts.map(v => `${v}`),
+                        ans,
+                        explain: `cos(${angle}°) = ${rounded}`
+                    };
+                }
+            }, {
+                topic: 'trigonometry',
+                difficulty: 'medium',
+                gen: () => {
+                    const angles = [0, 30, 45, 60];
+                    const angle = pick(angles);
+                    const val = Math.tan(angle * Math.PI / 180);
+                    const rounded = Math.round(val * 100) / 100;
+                    const opts = shuffle([
+                        `${rounded}`,
+                        `${Math.round(Math.sin(angle*Math.PI/180)*100)/100}`,
+                        `${Math.round(Math.cos(angle*Math.PI/180)*100)/100}`,
+                        `${Math.round((1+val)*100)/100}`
+                    ]);
+                    const ans = opts.indexOf(`${rounded}`);
+                    return {
+                        q: `tan(${angle}°)`,
+                        opts: opts.map(v => `${v}`),
+                        ans,
+                        explain: `tan(${angle}°) = ${rounded}`
+                    };
+                }
+            }, {
+                topic: 'trigonometry',
+                difficulty: 'hard',
+                gen: () => {
+                    const angle = pick([30, 45, 60]);
+                    const val = Math.sin(2 * angle * Math.PI / 180);
+                    const rounded = Math.round(val * 100) / 100;
+                    const opts = shuffle([
+                        `${rounded}`,
+                        `${Math.round(Math.cos(2*angle*Math.PI/180)*100)/100}`,
+                        `${Math.round(Math.tan(2*angle*Math.PI/180)*100)/100}`,
+                        `${Math.round((1-val)*100)/100}`
+                    ]);
+                    const ans = opts.indexOf(`${rounded}`);
+                    return {
+                        q: `sin(2·${angle}°)`,
+                        opts: opts.map(v => `${v}`),
+                        ans,
+                        explain: `sin(${2*angle}°) = ${rounded}`
+                    };
+                }
+            }, ];
+
+            // ----- STATISTICS -----
+            const statsTemplates = [{
+                topic: 'statistics',
+                difficulty: 'easy',
+                gen: () => {
+                    const data = [];
+                    for (let i = 0; i < 5; i++) data.push(rand(1, 20));
+                    const sum = data.reduce((a, b) => a + b, 0);
+                    const mean = sum / data.length;
+                    if (!Number.isInteger(mean)) return null;
+                    const opts = shuffle([
+                        `${mean}`,
+                        `${mean + rand(1, 4)}`,
+                        `${mean - rand(1, 4)}`,
+                        `${data[2]}`
+                    ]);
+                    const ans = opts.indexOf(`${mean}`);
+                    return {
+                        q: `Mean of [${data.join(', ')}]`,
+                        opts,
+                        ans,
+                        explain: `(${data.join('+')})/5 = ${mean}`
+                    };
+                }
+            }, {
+                topic: 'statistics',
+                difficulty: 'easy',
+                gen: () => {
+                    const data = [];
+                    for (let i = 0; i < 5; i++) data.push(rand(1, 15));
+                    data.sort((a, b) => a - b);
+                    const median = data[2];
+                    const opts = shuffle([
+                        `${median}`,
+                        `${median + rand(1, 3)}`,
+                        `${median - rand(1, 3)}`,
+                        `${data[0]}`
+                    ]);
+                    const ans = opts.indexOf(`${median}`);
+                    return {
+                        q: `Median of [${data.join(', ')}]`,
+                        opts,
+                        ans,
+                        explain: `Sorted: ${data.join(', ')} → median = ${median}`
+                    };
+                }
+            }, {
+                topic: 'statistics',
+                difficulty: 'medium',
+                gen: () => {
+                    const data = [];
+                    for (let i = 0; i < 6; i++) data.push(rand(1, 12));
+                    const sum = data.reduce((a, b) => a + b, 0);
+                    const mean = Math.round(sum / data.length);
+                    const opts = shuffle([
+                        `${mean}`,
+                        `${mean + rand(1, 3)}`,
+                        `${mean - rand(1, 3)}`,
+                        `${data[2]}`
+                    ]);
+                    const ans = opts.indexOf(`${mean}`);
+                    return {
+                        q: `Mean of [${data.join(', ')}] (round to nearest integer)`,
+                        opts,
+                        ans,
+                        explain: `(${data.join('+')})/6 ≈ ${mean}`
+                    };
+                }
+            }, {
+                topic: 'statistics',
+                difficulty: 'hard',
+                gen: () => {
+                    // Probability: rolling dice
+                    const faces = pick([6, 8, 10, 12]);
+                    const target = rand(1, faces);
+                    const prob = (1 / faces * 100);
+                    const rounded = Math.round(prob);
+                    const opts = shuffle([
+                        `${rounded}%`,
+                        `${rounded + rand(5, 15)}%`,
+                        `${rounded - rand(5, 15)}%`,
+                        `${Math.round((2/faces)*100)}%`
+                    ]);
+                    const ans = opts.indexOf(`${rounded}%`);
+                    return {
+                        q: `Probability of rolling a ${target} on a ${faces}-sided die`,
+                        opts,
+                        ans,
+                        explain: `1/${faces} = ${rounded}%`
+                    };
+                }
+            }, ];
+
+            // ----- CALCULUS (basic) -----
+            const calcTemplates = [{
+                topic: 'calculus',
+                difficulty: 'medium',
+                gen: () => {
+                    const a = rand(2, 5),
+                        n = rand(2, 4);
+                    const val = a * n;
+                    const opts = shuffle([
+                        `${val}x${n-1 === 1 ? '' : '^'+(n-1)}`,
+                        `${a}x${n-1 === 1 ? '' : '^'+(n-1)}`,
+                        `${val}x^${n}`,
+                        `${a*n}x^${n}`
+                    ]);
+                    const ans = opts.indexOf(`${val}x${n-1 === 1 ? '' : '^'+(n-1)}`);
+                    return {
+                        q: `Derivative of ${a}x^${n}`,
+                        opts,
+                        ans,
+                        explain: `d/dx(${a}x^${n}) = ${a}·${n}x^${n-1} = ${val}x${n-1===1?'':'^'+(n-1)}`
+                    };
+                }
+            }, {
+                topic: 'calculus',
+                difficulty: 'hard',
+                gen: () => {
+                    const a = rand(2, 4),
+                        n = rand(2, 4);
+                    const val = a / (n + 1);
+                    if (!Number.isInteger(val)) return null;
+                    const opts = shuffle([
+                        `${val}x^${n+1}`,
+                        `${val}x^${n}`,
+                        `${a}x^${n+1}`,
+                        `${val}x^${n+2}`
+                    ]);
+                    const ans = opts.indexOf(`${val}x^${n+1}`);
+                    return {
+                        q: `Integral of ${a}x^${n} dx`,
+                        opts,
+                        ans,
+                        explain: `∫${a}x^${n} dx = ${a}·x^${n+1}/${n+1} = ${val}x^${n+1} + C`
+                    };
+                }
+            }, {
+                topic: 'calculus',
+                difficulty: 'medium',
+                gen: () => {
+                    const a = rand(1, 4),
+                        b = rand(1, 4);
+                    const val = a + b;
+                    const opts = shuffle([
+                        `${val}`,
+                        `${a}`,
+                        `${b}`,
+                        `${a*b}`
+                    ]);
+                    const ans = opts.indexOf(`${val}`);
+                    return {
+                        q: `lim(x→0) of (${a}x + ${b}x)/x`,
+                        opts,
+                        ans,
+                        explain: `= lim(${a}+${b}) = ${val}`
+                    };
+                }
+            }, ];
+
+            // ----- NUMBER THEORY -----
+            const numTheoryTemplates = [{
+                topic: 'number-theory',
+                difficulty: 'easy',
+                gen: () => {
+                    const a = rand(2, 8),
+                        d = rand(2, 5),
+                        n = rand(3, 6);
+                    const val = a + (n - 1) * d;
+                    const opts = shuffle([
+                        `${val}`,
+                        `${val + d}`,
+                        `${val - d}`,
+                        `${a + n*d}`
+                    ]);
+                    const ans = opts.indexOf(`${val}`);
+                    return {
+                        q: `Arithmetic sequence: ${a}, ${a+d}, ... Find term ${n}`,
+                        opts,
+                        ans,
+                        explain: `aₙ = ${a} + (${n}-1)·${d} = ${val}`
+                    };
+                }
+            }, {
+                topic: 'number-theory',
+                difficulty: 'medium',
+                gen: () => {
+                    const a = rand(2, 4),
+                        r = rand(2, 4),
+                        n = rand(3, 5);
+                    const val = a * Math.pow(r, n - 1);
+                    const opts = shuffle([
+                        `${val}`,
+                        `${val * r}`,
+                        `${val / r}`,
+                        `${a * Math.pow(r, n)}`
+                    ]);
+                    const ans = opts.indexOf(`${val}`);
+                    return {
+                        q: `Geometric sequence: ${a}, ${a*r}, ... Find term ${n}`,
+                        opts: opts.map(v => `${v}`),
+                        ans,
+                        explain: `aₙ = ${a}·${r}^${n-1} = ${val}`
+                    };
+                }
+            }, {
+                topic: 'number-theory',
+                difficulty: 'hard',
+                gen: () => {
+                    const b = rand(2, 5),
+                        e = rand(2, 4);
+                    const val = Math.pow(b, e);
+                    const opts = shuffle([
+                        `${val}`,
+                        `${val + rand(5, 15)}`,
+                        `${val - rand(5, 15)}`,
+                        `${b * e}`
+                    ]);
+                    const ans = opts.indexOf(`${val}`);
+                    return {
+                        q: `log_${b}(${val}) = ?`,
+                        opts,
+                        ans,
+                        explain: `log_${b}(${val}) = ${e} because ${b}^${e} = ${val}`
+                    };
+                }
+            }, ];
+
+            // ----- FUNCTIONS -----
+            const funcTemplates = [{
+                topic: 'functions',
+                difficulty: 'easy',
+                gen: () => {
+                    const x = rand(-5, 8);
+                    const val = 2 * x + 3;
+                    const opts = shuffle([
+                        `${val}`,
+                        `${val + rand(2, 6)}`,
+                        `${val - rand(2, 6)}`,
+                        `${x * 3 + 2}`
+                    ]);
+                    const ans = opts.indexOf(`${val}`);
+                    return {
+                        q: `f(x) = 2x + 3, find f(${x})`,
+                        opts,
+                        ans,
+                        explain: `f(${x}) = 2(${x}) + 3 = ${val}`
+                    };
+                }
+            }, {
+                topic: 'functions',
+                difficulty: 'medium',
+                gen: () => {
+                    const a = rand(2, 4),
+                        b = rand(1, 4),
+                        c = rand(1, 4);
+                    const x = rand(-3, 5);
+                    const val = a * x * x + b * x + c;
+                    const opts = shuffle([
+                        `${val}`,
+                        `${val + rand(3, 8)}`,
+                        `${val - rand(3, 8)}`,
+                        `${a*x + b*x + c}`
+                    ]);
+                    const ans = opts.indexOf(`${val}`);
+                    return {
+                        q: `f(x) = ${a}x² + ${b}x + ${c}, find f(${x})`,
+                        opts,
+                        ans,
+                        explain: `f(${x}) = ${a}(${x})² + ${b}(${x}) + ${c} = ${val}`
+                    };
+                }
+            }, {
+                topic: 'functions',
+                difficulty: 'hard',
+                gen: () => {
+                    const x = rand(-4, 6);
+                    const val = 3 * x - 5;
+                    const opts = shuffle([
+                        `${val}`,
+                        `${val + rand(2, 6)}`,
+                        `${val - rand(2, 6)}`,
+                        `${(val + 5)/3}`
+                    ]);
+                    const ans = opts.indexOf(`${val}`);
+                    return {
+                        q: `f(x) = 3x - 5, find f⁻¹(${val})`,
+                        opts,
+                        ans,
+                        explain: `f⁻¹(${val}) = (${val}+5)/3 = ${x}`
+                    };
+                }
+            }, ];
+
+            // Combine all templates
+            const allTemplates = [
+                ...algebraTemplates,
+                ...geometryTemplates,
+                ...trigTemplates,
+                ...statsTemplates,
+                ...calcTemplates,
+                ...numTheoryTemplates,
+                ...funcTemplates
+            ];
+
+            // ---------- Generate 500 questions ----------
+            function generateQuestions() {
+                const qs = [];
+                let attempts = 0;
+                const maxAttempts = 10000;
+
+                while (qs.length < TOTAL && attempts < maxAttempts) {
+                    attempts++;
+                    const template = pick(allTemplates);
+                    const result = template.gen();
+                    if (!result) continue;
+
+                    // Ensure unique-ish question (simple check)
+                    const qStr = result.q;
+                    if (qs.some(q => q.question === qStr)) continue;
+
+                    qs.push({
+                        topic: template.topic,
+                        difficulty: template.difficulty,
+                        question: result.q,
+                        options: result.opts,
+                        answer: result.ans,
+                        explanation: result.explain || ''
+                    });
+                }
+
+                // If we didn't reach 500, duplicate some with variations
+                while (qs.length < TOTAL) {
+                    const template = pick(allTemplates);
+                    const result = template.gen();
+                    if (result) {
+                        qs.push({
+                            topic: template.topic,
+                            difficulty: template.difficulty,
+                            question: result.q,
+                            options: result.opts,
+                            answer: result.ans,
+                            explanation: result.explain || ''
+                        });
+                    }
+                }
+
+                return shuffle(qs);
+            }
+
+            // ---------- Filtering ----------
+            function getFilteredIndices() {
+                const indices = [];
+                for (let i = 0; i < questions.length; i++) {
+                    const q = questions[i];
+                    const matchTopic = filterTopic === 'all' || q.topic === filterTopic;
+                    const matchDiff = filterDiff === 'all' || q.difficulty === filterDiff;
+                    if (matchTopic && matchDiff) indices.push(i);
+                }
+                return indices;
+            }
+
+            // ---------- Render ----------
+            function renderQuestion() {
+                const filtered = getFilteredIndices();
+                if (filtered.length === 0) {
+                    // No questions match filter
+                    qText.innerHTML = `<span style="color:#6a7f9f;">No questions match the selected filters. Try adjusting them.</span>`;
+                    optionsContainer.innerHTML = '';
+                    feedbackText.textContent = '—';
+                    qTopic.textContent = '—';
+                    qDifficulty.textContent = '—';
+                    qDifficulty.className = 'difficulty';
+                    qNum.textContent = '#0';
+                    nextBtn.disabled = true;
+                    skipBtn.disabled = true;
+                    return;
+                }
+
+                if (currentFilteredPos >= filtered.length) {
+                    currentFilteredPos = 0;
+                }
+                const idx = filtered[currentFilteredPos];
+                const q = questions[idx];
+                currentIndex = idx;
+
+                // Meta
+                qTopic.textContent = q.topic.charAt(0).toUpperCase() + q.topic.slice(1);
+                qDifficulty.textContent = q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1);
+                qDifficulty.className = `difficulty ${q.difficulty}`;
+
+                // Question
+                const displayNum = idx + 1;
+                qNum.textContent = `#${displayNum}`;
+                qText.innerHTML = q.question.replace(/\*/g, '·').replace(/x/g, '<span class="math">x</span>');
+
+                // Options
+                const labels = ['A', 'B', 'C', 'D'];
+                optionsContainer.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'opt-btn';
+                    btn.dataset.index = i;
+                    btn.innerHTML = `<span class="label">${labels[i]}</span> ${opt}`;
+                    btn.addEventListener('click', () => handleOptionClick(i));
+                    optionsContainer.appendChild(btn);
+                });
+
+                // Reset feedback
+                feedbackText.textContent = 'Select an answer';
+                feedbackText.className = '';
+                answered = false;
+                answeredCorrectly = false;
+                nextBtn.disabled = true;
+                skipBtn.disabled = false;
+
+                // Enable all options
+                document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('disabled', 'correct', 'wrong', 'reveal'));
+
+                // Update progress
+                updateProgress();
+            }
+
+            // ---------- Handle option click ----------
+            function handleOptionClick(index) {
+                if (answered) return;
+                const q = questions[currentIndex];
+                const btns = document.querySelectorAll('.opt-btn');
+                const selected = btns[index];
+                const correct = btns[q.answer];
+
+                // Disable all
+                btns.forEach(b => b.classList.add('disabled'));
+
+                if (index === q.answer) {
+                    selected.classList.add('correct');
+                    feedbackText.textContent = '✅ Correct! ' + (q.explanation || '');
+                    feedbackText.className = 'correct-text';
+                    score++;
+                    streak++;
+                    if (streak > bestStreak) bestStreak = streak;
+                    answeredCorrectly = true;
+                } else {
+                    selected.classList.add('wrong');
+                    correct.classList.add('correct', 'reveal');
+                    feedbackText.textContent = `❌ Incorrect. ${q.explanation || ''}`;
+                    feedbackText.className = 'wrong-text';
+                    streak = 0;
+                    answeredCorrectly = false;
+                }
+
+                answered = true;
+                nextBtn.disabled = false;
+                updateStats();
+            }
+
+            // ---------- Next / Skip ----------
+            function goToNext() {
+                if (!answered && !nextBtn.disabled) {
+                    // If not answered but next is enabled (shouldn't happen)
+                    return;
+                }
+                const filtered = getFilteredIndices();
+                if (filtered.length === 0) return;
+
+                let nextPos = currentFilteredPos + 1;
+                if (nextPos >= filtered.length) {
+                    // Completed all filtered questions
+                    if (filtered.length === questions.length) {
+                        // All 500 done
+                        showComplete();
+                        return;
+                    } else {
+                        // Loop back
+                        nextPos = 0;
+                    }
+                }
+                currentFilteredPos = nextPos;
+                renderQuestion();
+            }
+
+            function skipQuestion() {
+                if (answered) return;
+                const q = questions[currentIndex];
+                const btns = document.querySelectorAll('.opt-btn');
+                btns.forEach(b => b.classList.add('disabled'));
+                btns[q.answer].classList.add('correct', 'reveal');
+                feedbackText.textContent = `⏭ Skipped. ${q.explanation || ''}`;
+                feedbackText.className = '';
+                answered = true;
+                nextBtn.disabled = false;
+                streak = 0;
+                updateStats();
+            }
+
+            // ---------- Stats & Progress ----------
+            function updateStats() {
+                scoreDisplay.textContent = score;
+                streakDisplay.textContent = streak;
+                const totalAnswered = questions.filter((q, i) => {
+                    // We track answered state per question via a separate map
+                    return answeredState[i] === true;
+                }).length;
+                qCounter.textContent = `${totalAnswered}/${TOTAL}`;
+            }
+
+            // Track which questions have been answered (for progress)
+            const answeredState = new Array(TOTAL).fill(false);
+
+            function updateProgress() {
+                const answeredCount = answeredState.filter(v => v).length;
+                const pct = Math.round((answeredCount / TOTAL) * 100);
+                progressFill.style.width = pct + '%';
+                progressLabel.textContent = pct + '%';
+                qCounter.textContent = `${answeredCount}/${TOTAL}`;
+            }
+
+            // Override render to track answered
+            const origRender = renderQuestion;
+            renderQuestion = function() {
+                origRender();
+                // Mark current as answered if we're moving forward
+                // We'll mark when next is clicked
+            };
+
+            // Override goToNext to mark answered
+            const origNext = goToNext;
+            goToNext = function() {
+                if (answered) {
+                    answeredState[currentIndex] = true;
+                }
+                const filtered = getFilteredIndices();
+                if (filtered.length === 0) return;
+                let nextPos = currentFilteredPos + 1;
+                if (nextPos >= filtered.length) {
+                    if (filtered.length === questions.length) {
+                        // Check if all answered
+                        const allDone = answeredState.every(v => v === true);
+                        if (allDone) {
+                            showComplete();
+                            return;
+                        }
+                    }
+                    nextPos = 0;
+                }
+                currentFilteredPos = nextPos;
+                renderQuestion();
+                updateProgress();
+                updateStats();
+            };
+
+            // Override skip
+            const origSkip = skipQuestion;
+            skipQuestion = function() {
+                if (answered) return;
+                origSkip();
+                answeredState[currentIndex] = true;
+                updateProgress();
+                updateStats();
+            };
+
+            // ---------- Complete ----------
+            function showComplete() {
+                questionArea.classList.add('hidden');
+                completeArea.classList.remove('hidden');
+                const totalAnswered = answeredState.filter(v => v).length;
+                const accuracy = totalAnswered > 0 ? Math.round((score / totalAnswered) * 100) : 0;
+                finalScore.textContent = score;
+                finalAccuracy.textContent = accuracy + '%';
+                finalStreak.textContent = bestStreak;
+            }
+
+            // ---------- Reset ----------
+            function resetGame() {
+                questions = generateQuestions();
+                currentIndex = 0;
+                currentFilteredPos = 0;
+                score = 0;
+                streak = 0;
+                bestStreak = 0;
+                answered = false;
+                answeredCorrectly = false;
+                for (let i = 0; i < TOTAL; i++) answeredState[i] = false;
+                questionArea.classList.remove('hidden');
+                completeArea.classList.add('hidden');
+                filterTopic = 'all';
+                filterDiff = 'all';
+                topicFilter.value = 'all';
+                diffFilter.value = 'all';
+                renderQuestion();
+                updateStats();
+                updateProgress();
+                nextBtn.disabled = true;
+                skipBtn.disabled = false;
+            }
+
+            // ---------- Filter change ----------
+            function applyFilters() {
+                filterTopic = topicFilter.value;
+                filterDiff = diffFilter.value;
+                currentFilteredPos = 0;
+                const filtered = getFilteredIndices();
+                if (filtered.length === 0) {
+                    // Show empty state
+                    qText.innerHTML = `<span style="color:#6a7f9f;">No questions match the selected filters. Try adjusting them.</span>`;
+                    optionsContainer.innerHTML = '';
+                    feedbackText.textContent = '—';
+                    qTopic.textContent = '—';
+                    qDifficulty.textContent = '—';
+                    qDifficulty.className = 'difficulty';
+                    qNum.textContent = '#0';
+                    nextBtn.disabled = true;
+                    skipBtn.disabled = true;
+                    return;
+                }
+                // Reset answered tracking for the new filtered set? No, keep global.
+                renderQuestion();
+            }
+
+            // ---------- Init ----------
+            function init() {
+                questions = generateQuestions();
+                for (let i = 0; i < TOTAL; i++) answeredState[i] = false;
+                currentFilteredPos = 0;
+                renderQuestion();
+                updateStats();
+                updateProgress();
+                nextBtn.disabled = true;
+
+                // Event listeners
+                nextBtn.addEventListener('click', goToNext);
+                skipBtn.addEventListener('click', skipQuestion);
+                resetBtn.addEventListener('click', resetGame);
+                restartBtn.addEventListener('click', resetGame);
+                topicFilter.addEventListener('change', applyFilters);
+                diffFilter.addEventListener('change', applyFilters);
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !nextBtn.disabled) goToNext();
+                    if (e.key === ' ' || e.key === 'Space') {
+                        e.preventDefault();
+                        if (!answered) {
+                            // Click first enabled option? Let's skip instead.
+                            skipQuestion();
+                        } else {
+                            goToNext();
+                        }
+                    }
+                    if (e.key >= '1' && e.key <= '4' && !answered) {
+                        const idx = parseInt(e.key) - 1;
+                        const btns = document.querySelectorAll('.opt-btn');
+                        if (btns[idx] && !btns[idx].classList.contains('disabled')) {
+                            handleOptionClick(idx);
+                        }
+                    }
+                });
+            }
+
+            // Start
+            init();
+
+        })();
+    </script>
+</body>
+</html>

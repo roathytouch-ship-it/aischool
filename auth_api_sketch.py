@@ -32,12 +32,49 @@ from pydantic import BaseModel, Field
 
 import db as db_pool
 from jwt_refresh import AuthError, Principal, TokenService
-from rate_limit import (
-    check_login_ip,
-    check_pin_student,
-    check_telegram_user,
-    raise_if_limited,
-)
+try:
+    from rate_limit import (
+        check_chat_ip,
+        check_chat_student,
+        check_login_ip,
+        check_pin_student,
+        check_start_student,
+        check_stt_student,
+        check_telegram_user,
+        check_tts_student,
+        raise_if_limited,
+    )
+except ImportError:
+    class _Allow:
+        allowed = True
+        retry_after_seconds = 0
+
+    def check_chat_ip(*_a, **_k):
+        return _Allow()
+
+    def check_chat_student(*_a, **_k):
+        return _Allow()
+
+    def check_login_ip(*_a, **_k):
+        return _Allow()
+
+    def check_pin_student(*_a, **_k):
+        return _Allow()
+
+    def check_start_student(*_a, **_k):
+        return _Allow()
+
+    def check_stt_student(*_a, **_k):
+        return _Allow()
+
+    def check_telegram_user(*_a, **_k):
+        return _Allow()
+
+    def check_tts_student(*_a, **_k):
+        return _Allow()
+
+    def raise_if_limited(*_a, **_k):
+        return None
 from repositories import get_repos, hash_pin, use_postgres
 from telegram_initdata import TelegramInitDataError, validate_init_data
 # Optional modules — soft import so local lesson works even if some files are missing
@@ -246,6 +283,7 @@ def health():
         "postgres_pool": db_pool.pool_status(),
         "llm_configured": llm_client.llm_configured(),
         "llm_last_error": llm_client.last_error(),
+        "llm_inflight": llm_client.inflight_stats(),
     }
 
 
@@ -457,6 +495,92 @@ def me(claims: Dict[str, Any] = Depends(bearer_principal)):
     return out
 
 
+@app.post("/v1/dev/ensure-demo")
+def ensure_demo_student():
+    """Local demo UI: guarantee stu_demo_sokha + PIN 4821 + Gold so Start works."""
+    from sqlalchemy import text
+
+    if use_postgres():
+        with db_pool.get_connection() as conn:
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO accounts (id, role, telegram_user_id, display_name, language)
+                    VALUES ('acc_demo_parent', 'parent', NULL, 'Demo Parent', 'en')
+                    ON CONFLICT (id) DO NOTHING
+                    """
+                )
+            )
+            try:
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO parents (account_id, max_children)
+                        VALUES ('acc_demo_parent', 7)
+                        ON CONFLICT (account_id) DO NOTHING
+                        """
+                    )
+                )
+            except Exception:
+                pass
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO accounts (id, role, telegram_user_id, display_name, language)
+                    VALUES ('acc_demo_sokha', 'student', NULL, 'Sokha', 'en')
+                    ON CONFLICT (id) DO NOTHING
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO students
+                      (id, account_id, parent_id, grade, plan_tier, tier_version)
+                    VALUES
+                      ('stu_demo_sokha', 'acc_demo_sokha', 'acc_demo_parent', 7, 'gold', 1)
+                    ON CONFLICT (id) DO UPDATE SET
+                      plan_tier = 'gold'
+                    """
+                )
+            )
+        user_repo.set_web_pin("stu_demo_sokha", "4821")
+        return {
+            "student_id": "stu_demo_sokha",
+            "pin": "4821",
+            "plan_tier": "gold",
+            "storage": "postgres",
+        }
+
+    st = user_repo.get_student("stu_demo_sokha")
+    if not st:
+        parent = user_repo.create_parent_account(
+            telegram_user_id=None, display_name="Demo Parent", language="en"
+        )
+        acc, st = user_repo.create_student_account(
+            telegram_user_id=None,
+            display_name="Sokha",
+            grade=7,
+            plan_tier="gold",
+            parent_id=parent["id"],
+        )
+        # memory store uses random ids — still set PIN; UI will use returned id
+        user_repo.set_web_pin(st["id"], "4821")
+        return {
+            "student_id": st["id"],
+            "pin": "4821",
+            "plan_tier": "gold",
+            "storage": "memory",
+        }
+    user_repo.set_web_pin("stu_demo_sokha", "4821")
+    return {
+        "student_id": "stu_demo_sokha",
+        "pin": "4821",
+        "plan_tier": "gold",
+        "storage": "memory",
+    }
+
+
 @app.post("/v1/dev/seed-pin-child")
 def seed_pin_child():
     """Create parent + PIN child for local tests (memory or Postgres)."""
@@ -484,7 +608,7 @@ def seed_pin_child():
 # Study session routes (stub AI)
 # ---------------------------------------------------------------------------
 
-from study_service import StudyError, StudyService, get_study_store
+from study_service import StudyError, StudyService, get_study_store, message_has_link
 
 _study_store = get_study_store()
 _study = StudyService(_study_store)
@@ -512,8 +636,18 @@ def _student_from_claims(claims: Dict[str, Any]) -> tuple[str, str]:
 
 
 @app.post("/v1/sessions/start")
-def sessions_start(body: StartSessionBody, claims: Dict[str, Any] = Depends(bearer_principal)):
+def sessions_start(
+    body: StartSessionBody,
+    request: Request,
+    claims: Dict[str, Any] = Depends(bearer_principal),
+):
     student_id, plan_tier = _student_from_claims(claims)
+    limited = raise_if_limited(
+        check_start_student(student_id),
+        message="Too many lesson starts. Please wait a moment.",
+    )
+    if limited:
+        raise HTTPException(429, detail=limited)
     try:
         session = _study.start(
             student_id=student_id,
@@ -535,16 +669,67 @@ def sessions_start(body: StartSessionBody, claims: Dict[str, Any] = Depends(bear
 def sessions_message(
     session_id: str,
     body: SessionMessageBody,
+    request: Request,
     claims: Dict[str, Any] = Depends(bearer_principal),
 ):
     student_id, _ = _student_from_claims(claims)
+    # Abuse / cost control: per student + per IP
+    limited = raise_if_limited(
+        check_chat_student(student_id),
+        message="Too many messages. Please wait a few seconds, then try again.",
+    )
+    if limited:
+        raise HTTPException(429, detail=limited)
+    client_ip = request.client.host if request.client else "unknown"
+    limited_ip = raise_if_limited(
+        check_chat_ip(client_ip),
+        message="Too many messages from this network. Please wait a moment.",
+    )
+    if limited_ip:
+        raise HTTPException(429, detail=limited_ip)
+    # Soft length guard (study_service also enforces 1000)
+    content = (body.content or "").strip()
+    if message_has_link(content):
+        raise HTTPException(
+            400,
+            detail={
+                "error": "no_links",
+                "message": "Paste the question here — the teacher cannot open links.",
+            },
+        )
+    if len(content) > 1000:
+        raise HTTPException(
+            400,
+            detail={"error": "too_long", "message": "Message too long (max 1000 characters)"},
+        )
     try:
-        user_msg, ai_msg = _study.add_user_message(session_id, student_id, body.content)
+        user_msg, ai_msg = _study.add_user_message(session_id, student_id, content)
     except StudyError as e:
         raise HTTPException(e.http_status, detail=e.to_dict())
+    except Exception as e:
+        print(f"[sessions_message] unexpected: {e}")
+        return {
+            "user": {"id": "msg_user_local", "role": "user", "content": content},
+            "assistant": {
+                "id": "msg_ai_fallback",
+                "role": "assistant",
+                "content": (
+                    "I saved your message, but the teacher hit a glitch. "
+                    "Please send again in a moment."
+                ),
+            },
+        }
+    llm_err = None
+    try:
+        import llm_client as _llm
+
+        llm_err = _llm.last_error()
+    except Exception:
+        llm_err = None
     return {
         "user": {"id": user_msg.id, "role": user_msg.role, "content": user_msg.content},
         "assistant": {"id": ai_msg.id, "role": ai_msg.role, "content": ai_msg.content},
+        "llm_error": llm_err,
     }
 
 
@@ -633,7 +818,13 @@ class TtsBody(BaseModel):
 @app.post("/v1/tts")
 def tts_speak(body: TtsBody, claims: Dict[str, Any] = Depends(bearer_principal)):
     """OpenAI TTS — teacher text → mp3. Auth required. Falls back not applied server-side."""
-    _ = claims  # any logged-in principal
+    sid = claims.get("student_id") or claims.get("sub") or "anon"
+    limited = raise_if_limited(
+        check_tts_student(str(sid)),
+        message="Voice is busy — wait a moment or use device voice.",
+    )
+    if limited:
+        raise HTTPException(429, detail=limited)
     if not tts_client.tts_configured():
         raise HTTPException(
             503,
@@ -655,7 +846,13 @@ async def stt_transcribe(
     language: Optional[str] = Form(None),
 ):
     """OpenAI STT — student audio → text. Auth required. Live Talk realtime still on hold."""
-    _ = claims
+    sid = claims.get("student_id") or claims.get("sub") or "anon"
+    limited = raise_if_limited(
+        check_stt_student(str(sid)),
+        message="Mic is busy — wait a moment or type your message.",
+    )
+    if limited:
+        raise HTTPException(429, detail=limited)
     if not stt_client.stt_configured():
         raise HTTPException(
             503,
@@ -709,8 +906,11 @@ _ADMIN_HIDDEN_SUBJECTS: set = set()
 
 
 
+# Live Talk packs dropped for v1 — routes return 410 so old clients fail clearly.
+
+
 class LiveTalkCreditBody(BaseModel):
-    minutes: int = Field(..., description="60 or 120")
+    minutes: int = Field(..., description="unused in v1")
     source: Optional[str] = "demo"
 
 
@@ -719,13 +919,28 @@ class LiveTalkConsumeBody(BaseModel):
     seconds: int = Field(..., ge=1, le=120)
 
 
+def _live_talk_gone():
+    raise HTTPException(
+        410,
+        detail={
+            "error": "live_talk_disabled",
+            "message": "Live Talk packs are not available in v1",
+        },
+    )
+
+
 @app.get("/v1/live-talk/balance")
 def live_talk_balance(claims: Dict[str, Any] = Depends(bearer_principal)):
-    student_id, _ = _student_from_claims(claims)
-    try:
+    """v1: always empty / disabled."""
+    if live_talk_service is not None:
+        student_id, _ = _student_from_claims(claims)
         return live_talk_service.get_balance(student_id)
-    except Exception as e:
-        raise HTTPException(500, detail={"error": "live_talk_error", "message": str(e)})
+    return {
+        "available": False,
+        "minutes_remaining": 0,
+        "expires_at": None,
+        "v1_disabled": True,
+    }
 
 
 @app.post("/v1/live-talk/credit")
@@ -733,14 +948,7 @@ def live_talk_credit(
     body: LiveTalkCreditBody,
     claims: Dict[str, Any] = Depends(bearer_principal),
 ):
-    """Credit pack (demo / admin / later payment-proof). Stacks + 90-day expiry."""
-    student_id, _ = _student_from_claims(claims)
-    try:
-        return live_talk_service.credit_pack(
-            student_id, body.minutes, source=body.source or "demo"
-        )
-    except live_talk_service.LiveTalkError as e:
-        raise HTTPException(e.http_status, detail=e.to_dict())
+    _live_talk_gone()
 
 
 @app.post("/v1/live-talk/assert")
@@ -748,12 +956,7 @@ def live_talk_assert(
     body: LiveTalkConsumeBody,
     claims: Dict[str, Any] = Depends(bearer_principal),
 ):
-    """Check pack + session cap before turning Live Talk on."""
-    student_id, _ = _student_from_claims(claims)
-    try:
-        return live_talk_service.assert_can_use_live(student_id, body.session_id)
-    except live_talk_service.LiveTalkError as e:
-        raise HTTPException(e.http_status, detail=e.to_dict())
+    _live_talk_gone()
 
 
 @app.post("/v1/live-talk/consume")
@@ -761,12 +964,7 @@ def live_talk_consume(
     body: LiveTalkConsumeBody,
     claims: Dict[str, Any] = Depends(bearer_principal),
 ):
-    """Burn pack seconds + session live_seconds_used (server enforcement)."""
-    student_id, _ = _student_from_claims(claims)
-    try:
-        return live_talk_service.consume(student_id, body.session_id, body.seconds)
-    except live_talk_service.LiveTalkError as e:
-        raise HTTPException(e.http_status, detail=e.to_dict())
+    _live_talk_gone()
 
 
 
@@ -955,7 +1153,25 @@ def admin_pending_payments(
     limit: int = 50,
     ctx: Dict[str, Any] = Depends(require_master_admin),
 ):
+    """Shortcut: only pending_review (same data as Telegram queue)."""
     return {"payments": payment_telegram.list_pending(limit=limit)}
+
+
+@app.get("/v1/admin/payments")
+def admin_list_payments(
+    status: str = "pending_review",
+    limit: int = 50,
+    ctx: Dict[str, Any] = Depends(require_master_admin),
+):
+    """
+    Master Admin payment queue — same source of truth as Telegram buttons.
+    status: pending_review | approved | rejected | all
+    Approve/Reject here OR on Telegram; both call resolve_payment and sync the other side.
+    """
+    if payment_telegram is None:
+        raise HTTPException(503, detail={"error": "payments_unavailable"})
+    rows = payment_telegram.list_payments(status=status, limit=limit)
+    return {"status": status, "count": len(rows), "payments": rows}
 
 
 @app.post("/v1/admin/payments/{payment_id}/approve")

@@ -26,7 +26,7 @@ from typing import Any, Dict, Optional, Protocol
 # Config
 # ---------------------------------------------------------------------------
 
-ACCESS_TTL_SECONDS = 30 * 60          # 30 minutes
+ACCESS_TTL_SECONDS = 90 * 60          # 90 minutes — one Gold block + slack; UI silent-refresh still required
 REFRESH_TTL_SECONDS = 14 * 24 * 3600  # 14 days
 REFRESH_BYTES = 32
 JWT_ISSUER = "ai-school"

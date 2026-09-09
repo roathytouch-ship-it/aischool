@@ -4,7 +4,7 @@ AI School — study session service (start / message / end).
 Enforces:
   - one active block per student
   - plan session caps (basic 1 / silver 3 / gold 4)
-  - duration by plan (25 / 45 / 60) or review 15 / reflect 10
+  - duration by plan (25 / 45 / 45) or review 15 / reflect 10
   - subject unlock: silver/gold all; basic free cores + passes
 
 Memory + Postgres via repositories patterns.
@@ -13,6 +13,7 @@ LLM call is stubbed (echo) — replace with real provider later.
 
 from __future__ import annotations
 
+import re
 import secrets
 import time
 from dataclasses import dataclass, field
@@ -21,7 +22,14 @@ from typing import Any, Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 import llm_client
-from prompts import parse_recap_llm_output, recap_system_prompt, recap_user_payload, teacher_system_prompt
+from prompts import (
+    format_teacher_track_card,
+    parse_recap_llm_output,
+    parse_recap_structured_json,
+    recap_system_prompt,
+    recap_user_payload,
+    teacher_system_prompt,
+)
 
 PHNOM_PENH = ZoneInfo("Asia/Phnom_Penh")
 
@@ -35,9 +43,114 @@ def _season_note_safe() -> str:
         return ""
 
 
+_LINK_RE = re.compile(
+    r"(https?://|www\.|t\.me/|tg://|mailto:|file://|"
+    r"(?:^|[\s<(])(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?(?:[/:\s]|$))",
+    re.I,
+)
+
+
+def message_has_link(text: str) -> bool:
+    return bool(_LINK_RE.search(text or ""))
+
+
+_CHOICE_ANSWER_RE = re.compile(
+    r"^\s*(?:q\s*\d+\s*[:.)-]?\s*)?"
+    r"(?:[a-e]|true|false|t|f|ng|not given)"
+    r"(?:\s*[,;/]\s*(?:q\s*\d+\s*[:.)-]?\s*)?"
+    r"(?:[a-e]|true|false|t|f|ng|not given))*"
+    r"\s*[.]?\s*$",
+    re.I,
+)
+
+
+def _is_choice_answer(text: str) -> bool:
+    t = (text or "").strip()
+    if not t or len(t) > 48:
+        return False
+    return bool(_CHOICE_ANSWER_RE.match(t))
+
+
+def _expand_choice_answer(text: str) -> str:
+    """Keep DB as typed; send the model a full sentence so a lone letter is not 'cut off'."""
+    t = (text or "").strip()
+    if not _is_choice_answer(t):
+        return t
+    return f"My answer is {t}."
+
+
+def _looks_cut_off_mcq(text: str) -> bool:
+    """True when a paper item started A) but never reached B)."""
+    t = llm_client.strip_continue_cue(text or "")
+    if not t:
+        return False
+    if re.search(r"\bA\)\s*$", t):
+        return True
+    if re.search(r"\bA\)", t) and not re.search(r"\bB\)", t):
+        return True
+    return False
+
+
+def _last_assistant_content(history: List[Any], skip_id: Optional[str] = None) -> str:
+    for m in reversed(history or []):
+        if skip_id and getattr(m, "id", None) == skip_id:
+            continue
+        if getattr(m, "role", "") == "assistant":
+            return getattr(m, "content", None) or ""
+    return ""
+
+
+def _wait_for_options_reply() -> str:
+    return (
+        "I got your answer, but I should not mark it yet.\n\n"
+        "The last question only showed **A)** — B, C, and D were still missing. "
+        "Marking now would not be fair.\n\n"
+        "Tap **Continue** so I can send the rest of the choices. "
+        "Then send your letter again."
+        "\n\n[[CONTINUE]]"
+    )
+
+
+def _choice_glitch_first(student_text: str) -> str:
+    """Replace a cut-off reply. No LLM retry. Do not ask them to send the same letter again."""
+    shown = (student_text or "").strip() or "your answer"
+    return (
+        f"I received **{shown}**, but I could not read that check on my end.\n\n"
+        f"Let's move on — tap **Practice more** for a new item, "
+        f"or **Hints** if you still want a nudge on this one. "
+        f"You can also type one short sentence about the question."
+    )
+
+
+def _choice_glitch_again(student_text: str) -> str:
+    """Same letter sent after a glitch — still no fake mark, still no 'send B again'."""
+    shown = (student_text or "").strip() or "your answer"
+    return (
+        f"I still have **{shown}**, but I could not check it.\n\n"
+        f"Skip this item. Tap **Practice more** for a new question, "
+        f"or **Explain** for the idea without a score."
+    )
+
+
+def _looks_like_cut_off_glitch(text: str) -> bool:
+    t = (text or "").lower()
+    needles = (
+        "got cut off",
+        "was cut off",
+        "answer got cut",
+        "message was cut",
+        "reply got cut",
+        "sorry the answer",
+        "send that again",
+        "send it again",
+        "short glitch",
+    )
+    return any(n in t for n in needles)
+
+
 FREE_CORES = {"general_math", "general_english"}
 PLAN_SESSIONS = {"basic": 1, "silver": 3, "gold": 4}
-PLAN_MINUTES = {"basic": 25, "silver": 45, "gold": 60}
+PLAN_MINUTES = {"basic": 25, "silver": 45, "gold": 45}
 TEACHERS = {
     "general_math": "alex",
     "general_english": "emma",
@@ -47,7 +160,15 @@ TEACHERS = {
     "coding": "codey",
     "ai_and_robot": "calliope",
     "spelling_bee": "ivy",
-    # languages map at session start if needed: french → etoile, spanish → estrella
+    "vocabulary_building": "lexsis",
+    "skills_path": "sage",
+    "health_science": "dr_mira",
+    "french": "etoile",
+    "spanish": "estrella",
+    "russian": "ksenia",
+    "languages": "etoile",  # refined by subject_track at prompt layer
+    "scholarship_prep": "nadia",
+    "scholarship": "nadia",
 }
 
 
@@ -87,6 +208,266 @@ class StudySession:
     pauses_used: int
     extension_used: bool
     usage_date: date
+    # Vocabulary Building: words/phrases introduced this block (from **bold** in teacher replies)
+    session_vocab_items: List[str] = field(default_factory=list)
+    # Sticky goals for this live block (1–2 short lines) — survives 6/8-turn history window
+    session_goals: List[str] = field(default_factory=list)
+    # Last letter/T-F-NG that hit a cut-off glitch (memory only — no extra DB column)
+    choice_glitch_letter: Optional[str] = None
+
+
+def build_initial_session_goals(
+    *,
+    subject_key: str,
+    subject_track: Optional[str],
+    prior_recap: Optional[str],
+    mode: str = "lesson",
+) -> List[str]:
+    """1–2 short sticky goals for this block. Prefer last Next; else subject/track default."""
+    from prompts import SUBJECT_LABELS
+
+    goals: List[str] = []
+    prior = (prior_recap or "").strip()
+    if prior:
+        for line in prior.splitlines():
+            s = line.strip()
+            low = s.lower()
+            if low.startswith("next:"):
+                g = s.split(":", 1)[1].strip()
+                if g and len(g) >= 3:
+                    goals.append(g[:120])
+                    break
+        # Optional second: one weak/strength hint if present and short
+        if len(goals) < 2:
+            for line in prior.splitlines():
+                s = line.strip()
+                low = s.lower()
+                if low.startswith("strength:") or low.startswith("weak"):
+                    g = s.split(":", 1)[1].strip() if ":" in s else ""
+                    if g and len(g) >= 8:
+                        goals.append(("Build on: " + g)[:120])
+                        break
+
+    label = SUBJECT_LABELS.get(subject_key, subject_key or "this subject")
+    track = (subject_track or "").strip()
+    sk = (subject_key or "").strip().lower().replace(" ", "_").replace("-", "_")
+    if not goals:
+        if mode == "review":
+            goals.append(f"Review: clarify {label}" + (f" ({track})" if track else ""))
+        elif mode == "reflect":
+            goals.append(f"Reflect on recent {label} work")
+        elif sk in ("coding",):
+            # Golden-rule style: one tangible outcome for THIS block
+            if track:
+                goals.append(f"Coding — finish one working piece in {track} this block")
+            else:
+                goals.append("Coding — one small working result before End")
+        elif sk in ("ai_and_robot", "ai_robot"):
+            if track:
+                goals.append(f"AI & Robot — one clear step in {track} this block")
+            else:
+                goals.append("AI & Robot — one clear build/understand step this block")
+        elif sk in ("spelling_bee", "spelling"):
+            goals.append("Spelling Bee — one Round of 5 (easy→hard); retry misses if time")
+        elif sk in ("exam_prep", "exam_preparation", "special_math"):
+            if track:
+                goals.append(f"{label} — practice or mini mock in {track}")
+            else:
+                goals.append(f"{label} — practice first; mini mock only if student asks")
+        elif track:
+            goals.append(f"{label} — focus: {track}")
+        else:
+            goals.append(f"{label} — practice and deepen this block")
+
+    # Second goal only when track adds a distinct focus and we only have one generic line
+    if len(goals) == 1 and track and track.lower() not in goals[0].lower():
+        if mode == "lesson":
+            if sk in ("coding", "ai_and_robot", "ai_robot"):
+                goals.append("Keep the goal tangible — small working step, not a huge unfinished project")
+            else:
+                goals.append(f"Stay with {track} unless student asks a different path")
+
+    # Dedupe + cap 2
+    out: List[str] = []
+    seen: set[str] = set()
+    for g in goals:
+        g = " ".join(str(g).split()).strip()
+        if not g:
+            continue
+        key = g.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(g[:120])
+        if len(out) >= 2:
+            break
+    return out
+
+
+def collect_session_vocab_items(messages: List[StudyMessage], *, limit: int = 20) -> List[str]:
+    """Pull target vocab items from teacher **bold** highlights this session. Order preserved, de-duped."""
+    import re
+
+    items: List[str] = []
+    seen: set[str] = set()
+    # **phrase** markdown; allow spaces and short hyphens inside
+    pat = re.compile(r"\*\*([^*]{2,48})\*\*")
+    for m in messages:
+        if not m or (m.role or "") not in ("assistant", "teacher"):
+            continue
+        text = m.content or ""
+        for raw in pat.findall(text):
+            item = " ".join(str(raw).split()).strip(" .:;,!?\"'")
+            if len(item) < 2 or len(item) > 48:
+                continue
+            key = item.lower()
+            if key in seen:
+                continue
+            # skip pure numbers / single letters
+            if item.isdigit() or (len(item) == 1 and item.isalpha()):
+                continue
+            seen.add(key)
+            items.append(item)
+            if len(items) >= limit:
+                return items
+    return items
+
+
+def collect_session_bee_round(
+    messages: List[StudyMessage], *, limit: int = 12
+) -> Dict[str, List[str]]:
+    """Spelling Bee light tracker: words tried + soft misses this session."""
+    import re
+
+    words: List[str] = []
+    misses: List[str] = []
+    seen_w: set[str] = set()
+    seen_m: set[str] = set()
+    bold = re.compile(r"\*\*([^*]{2,40})\*\*")
+    spell_cue = re.compile(
+        r"(?:spell|spelling|please spell|try)\s+[\"']?([A-Za-z][A-Za-z\-']{1,38})[\"']?",
+        re.I,
+    )
+    miss_cue = re.compile(
+        r"\b(not quite|incorrect|almost|try again|missed|wrong spelling|close,? but)\b",
+        re.I,
+    )
+    last_word: Optional[str] = None
+
+    def _add_word(raw: str) -> Optional[str]:
+        nonlocal last_word
+        item = " ".join(str(raw).split()).strip(" .:;,!?\"'")
+        if len(item) < 2 or len(item) > 40:
+            return None
+        if not re.search(r"[A-Za-z]", item):
+            return None
+        key = item.lower()
+        if key not in seen_w:
+            seen_w.add(key)
+            words.append(item)
+        last_word = item
+        return item
+
+    for m in messages:
+        if not m:
+            continue
+        text = m.content or ""
+        role = (m.role or "").lower()
+        if role in ("assistant", "teacher"):
+            for raw in bold.findall(text):
+                _add_word(raw)
+            for g in spell_cue.findall(text):
+                _add_word(g)
+            if miss_cue.search(text) and last_word:
+                mk = last_word.lower()
+                if mk not in seen_m:
+                    seen_m.add(mk)
+                    misses.append(last_word)
+        if len(words) >= limit:
+            break
+    return {"words": words[:limit], "misses": misses[: min(8, limit)]}
+
+
+def collect_session_mock_items(
+    messages: List[StudyMessage], *, limit: int = 8
+) -> List[str]:
+    """Exam Prep / Special Math mini-mock: light Q tags + soft result from nearby teacher lines."""
+    import re
+
+    items: List[str] = []
+    seen: set[str] = set()
+    q_pat = re.compile(
+        r"\b(?:Q(?:uestion)?\s*(\d{1,2})|(\d{1,2})\s*[\).:])\b",
+        re.I,
+    )
+    ok_cue = re.compile(r"\b(correct|right|yes\.|well done|nice work|exactly)\b", re.I)
+    miss_cue = re.compile(
+        r"\b(not quite|incorrect|almost|try again|missed|wrong|close,? but)\b", re.I
+    )
+    pending: Optional[str] = None
+
+    for m in messages:
+        if not m or (m.role or "") not in ("assistant", "teacher", "user"):
+            continue
+        text = m.content or ""
+        role = (m.role or "").lower()
+        if role in ("assistant", "teacher"):
+            for match in q_pat.finditer(text):
+                num = match.group(1) or match.group(2)
+                if not num:
+                    continue
+                tag = f"Q{int(num)}"
+                pending = tag
+                if tag.lower() not in seen:
+                    seen.add(tag.lower())
+                    items.append(tag)
+                    if len(items) >= limit:
+                        return items
+            if pending:
+                if ok_cue.search(text) and not miss_cue.search(text):
+                    soft = f"{pending} ok"
+                    if soft.lower() not in seen:
+                        seen.add(soft.lower())
+                        items.append(soft)
+                    pending = None
+                elif miss_cue.search(text):
+                    soft = f"{pending} miss"
+                    if soft.lower() not in seen:
+                        seen.add(soft.lower())
+                        items.append(soft)
+                    pending = None
+    return items[:limit]
+
+
+def collect_session_language_phrases(
+    messages: List[StudyMessage], *, limit: int = 4
+) -> List[str]:
+    """FR/ES/RU: 2–4 target phrases this block from teacher **bold** (or short quoted lines)."""
+    import re
+
+    items: List[str] = []
+    seen: set[str] = set()
+    bold = re.compile(r"\*\*([^*]{2,60})\*\*")
+    quoted = re.compile(r"[«\"]([^»\"]{2,60})[»\"]")
+
+    for m in messages:
+        if not m or (m.role or "") not in ("assistant", "teacher"):
+            continue
+        text = m.content or ""
+        for raw in bold.findall(text) + quoted.findall(text):
+            item = " ".join(str(raw).split()).strip(" .:;,!")
+            if len(item) < 2 or len(item) > 60:
+                continue
+            if len(item.split()) > 12:
+                continue
+            key = item.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            items.append(item)
+            if len(items) >= limit:
+                return items
+    return items
 
 
 @dataclass
@@ -149,6 +530,32 @@ class MemoryStudyStore:
         self.usage[(student_id, d)] = dict(usage)
 
 
+    def get_latest_recap_bundle_for_track(
+        self, student_id: str, subject_key: str, subject_track: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        best_sid = None
+        best_t = -1.0
+        want = (subject_track or "").strip()
+        for s in self.sessions.values():
+            if s.student_id != student_id or s.subject_key != subject_key:
+                continue
+            if s.status not in ("ended", "abandoned"):
+                continue
+            if want and (s.subject_track or "").strip() != want:
+                continue
+            t = float(s.ended_at or s.started_at or 0)
+            if t >= best_t:
+                best_t = t
+                best_sid = s.id
+        if not best_sid:
+            return None
+        rec = self.recaps.get(best_sid) or {}
+        return {
+            "summary_en": (rec.get("summary_en") or "").strip() or None,
+            "practice_json": rec.get("practice_json") or {},
+            "subject_track": want or None,
+        }
+
     def get_latest_recap_for_subject(self, student_id: str, subject_key: str) -> Optional[str]:
         """Level B: newest ended session recap for this student+subject."""
         best_sid = None
@@ -201,11 +608,18 @@ class MemoryStudyStore:
         return out
 
 
-    def save_recap(self, session_id: str, summary_en: str, summary_km: str = "") -> None:
+    def save_recap(
+        self,
+        session_id: str,
+        summary_en: str,
+        summary_km: str = "",
+        practice_json: Optional[Dict[str, Any]] = None,
+    ) -> None:
         self.recaps[session_id] = {
             "session_id": session_id,
             "summary_en": summary_en,
             "summary_km": summary_km,
+            "practice_json": dict(practice_json or {}),
         }
 
     def has_pass(self, student_id: str, subject_key: str) -> bool:
@@ -349,6 +763,7 @@ class PostgresStudyStore:
             return self._row_session(row) if row else None
 
     def list_active_sessions(self, student_id: Optional[str] = None) -> List[StudySession]:
+        import db as db_pool
         from sqlalchemy import text
         sql = """
             SELECT * FROM study_sessions
@@ -474,23 +889,72 @@ class PostgresStudyStore:
                 )
             return out
 
-    def save_recap(self, session_id: str, summary_en: str, summary_km: str = "") -> None:
+    def save_recap(
+        self,
+        session_id: str,
+        summary_en: str,
+        summary_km: str = "",
+        practice_json: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        import json
         import db as db_pool
         from sqlalchemy import text
 
+        payload = json.dumps(practice_json or {})
         with db_pool.get_connection() as conn:
             conn.execute(
                 text(
                     """
-                    INSERT INTO session_recaps (session_id, summary_en, summary_km, created_at)
-                    VALUES (:sid, :en, :km, now())
+                    INSERT INTO session_recaps (session_id, summary_en, summary_km, practice_json, created_at)
+                    VALUES (:sid, :en, :km, CAST(:pj AS jsonb), now())
                     ON CONFLICT (session_id) DO UPDATE SET
                       summary_en = EXCLUDED.summary_en,
-                      summary_km = EXCLUDED.summary_km
+                      summary_km = EXCLUDED.summary_km,
+                      practice_json = EXCLUDED.practice_json
                     """
                 ),
-                {"sid": session_id, "en": summary_en, "km": summary_km},
+                {"sid": session_id, "en": summary_en, "km": summary_km, "pj": payload},
             )
+
+    def get_latest_recap_bundle_for_track(
+        self, student_id: str, subject_key: str, subject_track: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        import db as db_pool
+        from sqlalchemy import text
+
+        want = (subject_track or "").strip()
+        sql = """
+            SELECT r.summary_en, r.practice_json, s.subject_track
+            FROM session_recaps r
+            JOIN study_sessions s ON s.id = r.session_id
+            WHERE s.student_id = :sid
+              AND s.subject_key = :sk
+              AND s.status IN ('ended', 'abandoned')
+        """
+        params: Dict[str, Any] = {"sid": student_id, "sk": subject_key}
+        if want:
+            sql += " AND COALESCE(s.subject_track, '') = :tr"
+            params["tr"] = want
+        sql += """
+            ORDER BY COALESCE(s.ended_at, s.started_at) DESC
+            LIMIT 1
+        """
+        with db_pool.get_connection() as conn:
+            row = conn.execute(text(sql), params).mappings().first()
+        if not row:
+            return None
+        pj = row.get("practice_json") or {}
+        if isinstance(pj, str):
+            try:
+                import json
+                pj = json.loads(pj)
+            except Exception:
+                pj = {}
+        return {
+            "summary_en": (row.get("summary_en") or "").strip() or None,
+            "practice_json": pj if isinstance(pj, dict) else {},
+            "subject_track": row.get("subject_track"),
+        }
 
 
     def get_latest_recap_for_subject(self, student_id: str, subject_key: str) -> Optional[str]:
@@ -779,17 +1243,36 @@ class StudyService:
 
         return True
 
-    def build_prior_recap_context(self, student_id: str, subject_key: str) -> Optional[str]:
+    def build_prior_recap_context(
+        self,
+        student_id: str,
+        subject_key: str,
+        subject_track: Optional[str] = None,
+    ) -> Optional[str]:
         """
         Default = Level B (last lesson only).
+        Prefer last recap + teacher card for THIS track when a track is set.
         Higher semester/year notes only on the **first study day of the new term** for this subject.
         """
         session_only = None
+        teacher_card = ""
         try:
-            if hasattr(self.store, "get_latest_recap_for_subject"):
+            bundle = None
+            if hasattr(self.store, "get_latest_recap_bundle_for_track"):
+                bundle = self.store.get_latest_recap_bundle_for_track(
+                    student_id, subject_key, subject_track
+                )
+            if bundle:
+                session_only = bundle.get("summary_en")
+                teacher_card = format_teacher_track_card(
+                    bundle.get("practice_json"),
+                    subject_track=subject_track or bundle.get("subject_track"),
+                )
+            elif hasattr(self.store, "get_latest_recap_for_subject"):
                 session_only = self.store.get_latest_recap_for_subject(student_id, subject_key)
         except Exception:
             session_only = None
+            teacher_card = ""
 
         use_higher = False
         try:
@@ -822,6 +1305,8 @@ class StudyService:
             # Level B only
             if session_only:
                 parts.append("LAST LESSON:\n" + str(session_only)[:600])
+        if teacher_card:
+            parts.append(teacher_card)
 
         if not parts:
             return None
@@ -1016,12 +1501,27 @@ class StudyService:
         except Exception as e:
             print(f"[study_service] close_stale on start: {e}")
 
-        if self.store.active_session(student_id):
-            raise StudyError(
-                "session_active",
-                "End or finish the current study block before starting another",
-                409,
-            )
+        leftover = self.store.active_session(student_id)
+        if leftover:
+            print(f"[study_service] start: closing leftover {leftover.id} ({leftover.status})")
+            try:
+                self.end(leftover.id, leftover.student_id)
+            except StudyError as e:
+                if e.code != "already_ended":
+                    print(f"[study_service] leftover end: {e}")
+                    leftover.status = "ended"
+                    leftover.ended_at = time.time()
+                    self.store.save_session(leftover)
+            except Exception as e:
+                print(f"[study_service] leftover force-close: {e}")
+                leftover.status = "ended"
+                leftover.ended_at = time.time()
+                self.store.save_session(leftover)
+        leftover = self.store.active_session(student_id)
+        if leftover:
+            leftover.status = "ended"
+            leftover.ended_at = leftover.ended_at or time.time()
+            self.store.save_session(leftover)
 
         if mode == "lesson" and not self.can_study(plan_tier, student_id, subject_key):
             raise StudyError(
@@ -1083,10 +1583,26 @@ class StudyService:
         # Level B+: last lesson + higher rollups (semester/daily) when they exist
         prior = None
         try:
-            prior = self.build_prior_recap_context(student_id, subject_key)
+            prior = self.build_prior_recap_context(student_id, subject_key, subject_track)
         except Exception as e:
             print(f"[study_service] prior recap load failed: {e}")
             prior = None
+
+        # Sticky session goals (1–2) — set once at Start; injected every chat turn
+        try:
+            session.session_goals = build_initial_session_goals(
+                subject_key=subject_key,
+                subject_track=subject_track,
+                prior_recap=prior,
+                mode=mode,
+            )
+        except Exception as e:
+            print(f"[study_service] session goals failed: {e}")
+            session.session_goals = []
+        try:
+            session._prior_recap = prior  # type: ignore[attr-defined]
+        except Exception:
+            pass
 
         # Greeting message
         if prior and mode == "lesson":
@@ -1124,8 +1640,27 @@ class StudyService:
         text = (content or "").strip()
         if not text:
             raise StudyError("empty", "Message is empty")
-        if len(text) > 1000:
-            raise StudyError("too_long", "Message too long (max 1000 characters)")
+        if message_has_link(text):
+            raise StudyError(
+                "no_links",
+                "Paste the question here — the teacher cannot open links.",
+            )
+
+        # Per-subject hard caps (chars). Soft UI nudge (~400) stays client-side.
+        # Default 600/1200 · Exam Prep + Special Math 700/1300 · Coding + AI & Robot 1000/1400
+        sk = (session.subject_key or "").strip().lower()
+        if sk in ("coding", "ai_and_robot", "ai_robot"):
+            student_max, ai_max = 1000, 1400
+        elif sk in ("special_math", "exam_preparation", "exam_prep", "scholarship_prep", "scholarship"):
+            student_max, ai_max = 700, 1300
+        else:
+            student_max, ai_max = 600, 1200
+
+        if len(text) > student_max:
+            raise StudyError(
+                "too_long",
+                f"Message too long (max {student_max} characters for this subject)",
+            )
 
         user_msg = StudyMessage(
             id=new_id("msg"), session_id=session_id, role="user", content=text
@@ -1135,6 +1670,7 @@ class StudyService:
         # Student grade + preferred name for teaching (from DB when available)
         grade_val = None
         preferred_name = None
+        teacher_words = "school"
         try:
             from repositories import get_repos
 
@@ -1145,6 +1681,9 @@ class StudyService:
                 if grade_val < 4 or grade_val > 12:
                     grade_val = None
             if st_row:
+                tw = str(st_row.get("teacher_words") or "school").strip().lower()
+                if tw in ("school", "academic", "challenge"):
+                    teacher_words = tw
                 preferred_name = (
                     st_row.get("display_name")
                     or st_row.get("preferred_name")
@@ -1158,9 +1697,44 @@ class StudyService:
         except Exception:
             grade_val = None
             preferred_name = None
+            teacher_words = "school"
 
         # Build short context from this session only
         history = self.store.list_messages(session_id)
+        vocab_items: List[str] = []
+        bee_words: List[str] = []
+        bee_misses: List[str] = []
+        mock_items: List[str] = []
+        lang_phrases: List[str] = []
+        sk_lower = (session.subject_key or "").strip().lower().replace(" ", "_").replace("-", "_")
+        if sk_lower in ("vocabulary_building", "vocabulary", "vocab"):
+            vocab_items = collect_session_vocab_items(history)
+            session.session_vocab_items = list(vocab_items)
+        if sk_lower in ("spelling_bee", "spelling"):
+            bee = collect_session_bee_round(history)
+            bee_words = list(bee.get("words") or [])
+            bee_misses = list(bee.get("misses") or [])
+        if sk_lower in ("exam_prep", "exam_preparation", "special_math"):
+            mock_items = collect_session_mock_items(history)
+        if sk_lower in ("languages", "french", "spanish", "russian"):
+            lang_phrases = collect_session_language_phrases(history, limit=4)
+
+        goals = list(getattr(session, "session_goals", None) or [])
+        if not goals and session.mode == "lesson":
+            try:
+                prior_for_goals = getattr(session, "_prior_recap", None) or self.build_prior_recap_context(
+                    session.student_id, session.subject_key, session.subject_track
+                )
+                goals = build_initial_session_goals(
+                    subject_key=session.subject_key,
+                    subject_track=session.subject_track,
+                    prior_recap=prior_for_goals,
+                    mode=session.mode,
+                )
+                session.session_goals = list(goals)
+            except Exception:
+                goals = []
+
         llm_messages = [
             {
                 "role": "system",
@@ -1173,7 +1747,9 @@ class StudyService:
                     mode=session.mode,
                     prior_recap=(
                         getattr(session, "_prior_recap", None)
-                        or self.build_prior_recap_context(session.student_id, session.subject_key)
+                        or self.build_prior_recap_context(
+                            session.student_id, session.subject_key, session.subject_track
+                        )
                     ),
                     seconds_remaining=max(
                         0,
@@ -1182,19 +1758,81 @@ class StudyService:
                     ),
                     duration_limit_sec=int(session.duration_limit_sec or 0),
                     season_note=_season_note_safe(),
+                    teacher_words=teacher_words,
                     student_preferred_name=preferred_name,
+                    session_vocab_items=vocab_items or None,
+                    session_goals=goals or None,
+                    session_bee_words=bee_words or None,
+                    session_bee_misses=bee_misses or None,
+                    session_mock_items=mock_items or None,
+                    session_language_phrases=lang_phrases or None,
                 ),
             }
         ]
         # Cap history by plan: Basic 6 · Silver/Gold 8 (token control)
+        # Truncate stored turns to subject student_max so history stays bounded
         tier = (session.plan_tier_snapshot or "basic").lower()
         hist_n = 6 if tier == "basic" else 8
+        hist_clip_user = max(student_max, 600)
+        hist_clip_ai = max(ai_max, 800)
         for m in history[-hist_n:]:
-            if m.role in ("user", "assistant"):
-                llm_messages.append({"role": m.role, "content": m.content[:1000]})
+            if m.role not in ("user", "assistant"):
+                continue
+            raw = llm_client.strip_continue_cue(m.content or "")
+            if m.role == "user":
+                raw = _expand_choice_answer(raw)
+                piece = raw[:hist_clip_user]
+            else:
+                piece = raw[:hist_clip_ai]
+            if piece:
+                llm_messages.append({"role": m.role, "content": piece})
+        choice = _is_choice_answer(text)
+        last_ai = _last_assistant_content(history, skip_id=user_msg.id)
+        if choice and _looks_cut_off_mcq(last_ai):
+            reply_body = _wait_for_options_reply()
+            session.choice_glitch_letter = None
+            if len(reply_body) > ai_max:
+                reply_body = llm_client._clip_at_sentence(reply_body, ai_max)
+            if _looks_cut_off_mcq(reply_body) and "[[CONTINUE]]" not in reply_body.upper():
+                reply_body = reply_body.rstrip() + "\n\n[[CONTINUE]]"
+            ai_msg = StudyMessage(
+                id=new_id("msg"), session_id=session_id, role="assistant", content=reply_body
+            )
+            self.store.add_message(ai_msg)
+            return user_msg, ai_msg
+        prev_glitch = (getattr(session, "choice_glitch_letter", None) or "").strip().lower()
+        same_after_glitch = bool(
+            choice and prev_glitch and text.strip().lower() == prev_glitch
+        )
+        if same_after_glitch:
+            print("[study_service] choice-answer glitch — same letter again, no extra LLM")
+            reply_body = _choice_glitch_again(text)
+            session.choice_glitch_letter = None
+        else:
+            if choice:
+                llm_messages.append(
+                    {
+                        "role": "system",
+                        "content": (
+                            "The student sent only a letter/T-F-NG. Treat it as their choice. "
+                            "Mark it now. Never say cut off / incomplete / send again. "
+                            "After the mark, go to the next item. Do not make them redo this item."
+                        ),
+                    }
+                )
 
-        # Prefer teaching detail; hard cap ~1200 chars
-        reply_body = llm_client.chat(llm_messages, max_chars=1200)
+            reply_body = llm_client.chat(
+                llm_messages,
+                max_chars=ai_max,
+                subject_key=session.subject_key,
+                thinking_override=False if choice else None,
+            )
+            if choice and (not reply_body or _looks_like_cut_off_glitch(reply_body or "")):
+                print("[study_service] choice-answer glitch — no retry, move on")
+                reply_body = _choice_glitch_first(text)
+                session.choice_glitch_letter = text.strip()
+            else:
+                session.choice_glitch_letter = None
         if not reply_body:
             err = None
             try:
@@ -1203,7 +1841,12 @@ class StudyService:
                 err = None
             print(f"[study_service] LLM unavailable ({err}) — soft fallback reply")
             # Friendly student-facing fallback (not a raw error code)
-            if err in ("llm_rate_limit", "llm_upstream", "llm_timeout", "llm_network"):
+            if err == "llm_busy":
+                reply_body = (
+                    "Your teacher is busy with other students right now. "
+                    "Please try again in a few seconds."
+                )
+            elif err in ("llm_rate_limit", "llm_upstream", "llm_timeout", "llm_network"):
                 reply_body = (
                     "I'm having a short connection problem. "
                     "Please send your question again in a moment. "
@@ -1216,12 +1859,13 @@ class StudyService:
                 )
             else:
                 reply_body = (
-                    f"Thanks — I saved your note about: “{text[:120]}”. "
-                    f"Let's keep practicing. "
-                    f"Can you try one small step or ask again in a simpler sentence?"
+                    "I had a short glitch reading that. "
+                    "Please tap Send again — we can keep going from here."
                 )
-        if len(reply_body) > 1200:
-            reply_body = reply_body[:1200]
+        if len(reply_body) > ai_max:
+            reply_body = llm_client._clip_at_sentence(reply_body, ai_max)
+        if _looks_cut_off_mcq(reply_body) and "[[CONTINUE]]" not in reply_body.upper():
+            reply_body = reply_body.rstrip() + "\n\n[[CONTINUE]]"
         ai_msg = StudyMessage(
             id=new_id("msg"), session_id=session_id, role="assistant", content=reply_body
         )
@@ -1268,13 +1912,23 @@ class StudyService:
         fallback_km = "មេរៀនបានបញ្ចប់។ សូមមើលសង្ខេបក្នុង Journal ឬជ្រើសមុខវិជ្ជាថ្មីនៅទំព័រដើម។"
 
         # Automated recap from live chat (last turns) — never blocks End
+        all_msgs = self.store.list_messages(session_id)
         excerpt_parts = []
-        for m in self.store.list_messages(session_id)[-8:]:
+        for m in all_msgs[-8:]:
             if m.role in ("user", "assistant"):
                 excerpt_parts.append(f"{m.role}: {m.content[:220]}")
         excerpt = "\n".join(excerpt_parts)[:1600] or "(no chat yet)"
+        vocab_for_recap: Optional[List[str]] = None
+        if (session.subject_key or "").strip().lower() in (
+            "vocabulary_building",
+            "vocabulary",
+            "vocab",
+        ):
+            vocab_for_recap = collect_session_vocab_items(all_msgs)
+            session.session_vocab_items = list(vocab_for_recap or [])
         summary_en = fallback_en
         summary_km = fallback_km
+        recap_llm = ""
         try:
             recap_llm = llm_client.chat(
                 [
@@ -1287,10 +1941,11 @@ class StudyService:
                             mode=session.mode,
                             duration_label=duration_label,
                             chat_excerpt=excerpt,
+                            session_vocab_items=vocab_for_recap,
                         ),
                     },
                 ],
-                max_chars=700,
+                max_chars=900,
                 temperature=0.35,
             )
             summary_en, summary_km = parse_recap_llm_output(
@@ -1301,7 +1956,13 @@ class StudyService:
         except Exception:
             summary_en, summary_km = fallback_en, fallback_km
 
-        self.store.save_recap(session_id, summary_en, summary_km)
+        practice_json = parse_recap_structured_json(recap_llm or "") if recap_llm else {}
+        if session.subject_track and not practice_json.get("track"):
+            practice_json["track"] = session.subject_track
+        try:
+            self.store.save_recap(session_id, summary_en, summary_km, practice_json)
+        except TypeError:
+            self.store.save_recap(session_id, summary_en, summary_km)
 
         # Learning progress: one row per subject per day (lesson mode)
         if session.mode == "lesson" and hasattr(self.store, "upsert_progress_daily"):

@@ -134,9 +134,29 @@
     <strong>2. Start lesson</strong>
     <label style="margin-top:10px">Subject</label>
     <select id="subject">
-      <option value="coding">coding (Subject Pass on seed)</option>
-      <option value="general_math">general_math (free core)</option>
-      <option value="general_english">general_english (free core)</option>
+      <option value="advanced_english" selected>advanced_english (Ms. Claire)</option>
+      <option value="special_math">special_math (Dr. Nova)</option>
+      <option value="exam_preparation">exam_preparation (Sophia)</option>
+      <option value="general_english">general_english (Emma)</option>
+      <option value="general_math">general_math (Alex)</option>
+      <option value="coding">coding (Codey)</option>
+    </select>
+    <label>Track / level (match the subject)</label>
+    <select id="track">
+      <option value="Pathfinder" selected>Pathfinder — Advanced English G8–9</option>
+      <option value="Explorer">Explorer — Advanced English</option>
+      <option value="Trailblazer">Trailblazer — Advanced English</option>
+      <option value="Summit">Summit — Advanced English</option>
+      <option value="Apex">Apex — Advanced English</option>
+      <option value="SASMO style">SASMO style — Special Math G8 suggest</option>
+      <option value="Logic Puzzle">Logic Puzzle — Special Math</option>
+      <option value="Math Kangaroo style">Math Kangaroo style — Special Math</option>
+      <option value="Suken style">Suken style — Special Math</option>
+      <option value="Olympiad style">Olympiad style — Special Math</option>
+      <option value="IELTS">IELTS — Exam Prep (English)</option>
+      <option value="SAT">SAT — Exam Prep</option>
+      <option value="TOEFL">TOEFL — Exam Prep</option>
+      <option value="">(none)</option>
     </select>
     <button type="button" id="btnStart" disabled>Start lesson</button>
     <p class="hint" id="sessionInfo">No active session</p>
@@ -236,20 +256,54 @@
       });
     }
 
+    async function tryRefresh() {
+      if (!state.refreshToken) return false;
+      const res = await fetch(apiBase() + '/v1/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: state.refreshToken }),
+      });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+      if (!res.ok || !data || !data.access_token) return false;
+      state.accessToken = data.access_token;
+      if (data.refresh_token) state.refreshToken = data.refresh_token;
+      log('token refreshed');
+      return true;
+    }
+
+    function errorMessage(data, status) {
+      return (data && (data.message || (data.detail && (data.detail.message || JSON.stringify(data.detail))))) || ('HTTP ' + status);
+    }
+
     async function request(path, options) {
       const opts = options || {};
-      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
-      if (state.accessToken) headers['Authorization'] = 'Bearer ' + state.accessToken;
-      const res = await fetch(apiBase() + path, {
-        method: opts.method || 'GET',
-        headers: headers,
-        body: opts.body != null ? JSON.stringify(opts.body) : undefined,
-      });
-      let data = null;
-      const text = await res.text();
-      try { data = text ? JSON.parse(text) : null; } catch (e) { data = { raw: text }; }
+      async function once() {
+        const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+        if (state.accessToken) headers['Authorization'] = 'Bearer ' + state.accessToken;
+        const res = await fetch(apiBase() + path, {
+          method: opts.method || 'GET',
+          headers: headers,
+          body: opts.body != null ? JSON.stringify(opts.body) : undefined,
+        });
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch (e) { data = { raw: text }; }
+        return { res: res, data: data };
+      }
+      let { res, data } = await once();
+      const expired = res.status === 401 && String(errorMessage(data, 401)).toLowerCase().indexOf('expired') !== -1;
+      if (expired && path !== '/v1/auth/refresh' && path !== '/v1/auth/pin') {
+        const ok = await tryRefresh();
+        if (ok) {
+          const second = await once();
+          res = second.res;
+          data = second.data;
+        }
+      }
       if (!res.ok) {
-        const err = new Error((data && (data.message || (data.detail && (data.detail.message || JSON.stringify(data.detail))))) || ('HTTP ' + res.status));
+        const err = new Error(errorMessage(data, res.status));
         err.status = res.status;
         err.data = data;
         throw err;
@@ -271,6 +325,13 @@
 
     document.getElementById('btnLogin').onclick = async function () {
       try {
+        try {
+          const demo = await request('/v1/dev/ensure-demo', { method: 'POST', body: {} });
+          if (demo && demo.student_id) document.getElementById('studentId').value = demo.student_id;
+          if (demo && demo.pin) document.getElementById('pin').value = demo.pin;
+        } catch (prep) {
+          log('ensure-demo skip: ' + (prep.message || prep));
+        }
         const body = {
           student_id: document.getElementById('studentId').value.trim(),
           pin: document.getElementById('pin').value.trim(),
@@ -290,9 +351,12 @@
     document.getElementById('btnStart').onclick = async function () {
       try {
         const subject = document.getElementById('subject').value;
+        const track = (document.getElementById('track').value || '').trim();
+        const body = { subject_key: subject, mode: 'lesson' };
+        if (track) body.subject_track = track;
         const data = await request('/v1/sessions/start', {
           method: 'POST',
-          body: { subject_key: subject, mode: 'lesson' },
+          body: body,
         });
         setSession(data.session, data.messages);
         log('start OK', data.session);
