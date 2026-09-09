@@ -119,6 +119,7 @@ SPECIAL_MATH_THEMES: dict[str, list[dict]] = {
         {"theme": "Find all possibilities that work", "grades": (8, 12)},
         {"theme": "Explain why — short reasoning (not formal paper proof)", "grades": (8, 12)},
         {"theme": "Invariant or “what never changes” (simple version)", "grades": (9, 12)},
+        {"theme": "Inequalities-lite (AM-GM or compare, G10–12 only)", "grades": (10, 12)},
         {"theme": "Non-routine problem solving under time pressure", "grades": (7, 12)},
         {"theme": "Mixed algebra–geometry–logic item", "grades": (8, 12)},
     ],
@@ -303,6 +304,24 @@ AI_ROBOT_THEMES: dict[str, list[dict]] = {
         {"theme": "Combine sensor + motor into one smart action", "grades": (7, 12)},
         {"theme": "Test plan: what should happen if…", "grades": (6, 12)},
         {"theme": "Improve one behavior after a “fail” story", "grades": (7, 12)},
+    ],
+    "Semiconductor": [
+        {"theme": "Conductor, insulator, semiconductor — school words", "grades": (6, 12)},
+        {"theme": "Why computers and robots need chips", "grades": (6, 12)},
+        {"theme": "Diode idea — current prefers one way (concept only)", "grades": (7, 12)},
+        {"theme": "Transistor as a tiny switch (idea, not a wiring lab)", "grades": (7, 12)},
+        {"theme": "A chip is many tiny switches working together", "grades": (7, 12)},
+        {"theme": "Where chips live — phone, board, robot “brain”", "grades": (6, 12)},
+        {"theme": "Heat and limits — chips can get too hot (concept)", "grades": (8, 12)},
+    ],
+    "Physical AI": [
+        {"theme": "Chat AI vs a robot that moves in the real world", "grades": (5, 12)},
+        {"theme": "Body + sensors + rules = physical AI (plain words)", "grades": (5, 12)},
+        {"theme": "Why the real world is messy (light, bump, slip)", "grades": (6, 12)},
+        {"theme": "Sense → decide → act in a room, not only on a screen", "grades": (6, 12)},
+        {"theme": "One small embodied job (stop at a wall / follow a line)", "grades": (6, 12)},
+        {"theme": "Safety around moving robots — space, stop, adult nearby", "grades": (5, 12)},
+        {"theme": "What the robot cannot know yet — limits of sensors", "grades": (7, 12)},
     ],
 }
 
@@ -662,6 +681,13 @@ def _normalize_track_key(subject_key: str, subject_track: str | None) -> str:
         "motors and movement": "Motors and Movement",
         "building behaviors": "Building Behaviors",
         "behaviors": "Building Behaviors",
+        "semiconductor": "Semiconductor",
+        "semiconductors": "Semiconductor",
+        "chip": "Semiconductor",
+        "physical ai": "Physical AI",
+        "physical": "Physical AI",
+        "embodied": "Physical AI",
+        "embodied ai": "Physical AI",
     }
 
     if not t:
@@ -1118,8 +1144,19 @@ ITEM SHAPE BY TRACK:
 - Math Kangaroo style: complete stem + five options A–E (one correct); student sends the letter (working optional).
 - SASMO style: multi-step constructed response; student shows working, then the answer. No five-choice unless they ask.
 - Suken style: clean numbered item; one exact answer + short method; looks like a structured test question.
-- Olympiad style: longer stem; “find all” / “show that” / one insight; student writes reasoning, not only a number.
+- Olympiad style: longer stem; “find all” / “show that” / “find the maximum or minimum”; student writes reasoning, not only a number.
 - Grade still scales numbers and wording. G5–7: shorter stem, friendlier numbers. G8–12: denser stem, tighter ask.
+
+OLYMPIAD QUALITY BAR (Olympiad style track only — teaching, not a contest committee):
+- Original item only. Never a real IMO / national olympiad paper, year, or official solution. If they ask “IMO 2024”, refuse the booklet, then one original item in that flavour.
+- Short stem: at most 4 sentences. Minimal notation. Prefer “Determine all…” / “Prove that…” / “Find the max or min…”.
+- Forbidden on this track: calculus, heavy brute-force search, decimal approximation as the method.
+- Tools stay high-school olympiad-lite and grade-fit (small cases, parity, remainder, invariant, counting, similar triangles, AM-GM only when G10–12 and they are ready). Do not name a toolkit dump (“use Cauchy-Schwarz”) unless that is the actual move.
+- Clean finish: a small integer, a short set, or a simple form — not a messy decimal.
+- If the idea is a known classic, change the constants or the story until it is fresh.
+- Height (never label IMO P1–P6): Warm = one insight with scaffolding; Contest = true contest-shaped item at this grade; Stretch = one notch harder, still finishable in this block. G4–6 stay Warm / short reason. G7–9 use Algebra / Number / Geometry / Combinatorics chips. G10–12 may add inequalities-lite. Stretch for G8 is not an IMO P6.
+- LIVE CLASS: send the stem only. Wait. Hint = one insight type in plain words. Explain = 2–4 start steps, stop before the boxed line until they try or give up. Never print a full lemma-by-lemma solution in the same bubble as a new problem.
+- Fixed original bank + answer keys = later (DB). Until then, generate one original item per reply from this bar + the theme / area chip.
 
 HINT AND EXPLAIN (required — Hint chip and Explain chip, especially Olympiad style):
 When they tap Hint or type “hint / stuck / tip”:
@@ -1443,6 +1480,9 @@ SUBJECT FOCUS — AI & Robot (teacher Calliope):{track_bit}
 - No dangerous hardware, wiring, or unsafe build instructions.
 - Good practice: explain, order steps, predict what a sensor or rule would do.
 - Safety first; stay age-appropriate.
+- Stay inside the chosen sub-subject. Soft tracks now include Semiconductor and Physical AI.
+- Semiconductor: ideas only — conductor / insulator / semiconductor, chip as many tiny switches, why robots need chips. Never fab steps, chemical names, how to etch silicon, or “build a transistor at home.”
+- Physical AI: robot-in-the-world vs chat-only AI; body + sensors + rules; messy real world; sense → decide → act. Concept + predict. No live robot driving instructions that could hurt someone. Motors / Sensors tracks stay for those parts if they picked those instead.
 
 VISUAL TEACHING (required habit — chat has no real pictures in v1):
 - When you introduce a part, path, or behavior, add **one short visual line** so the idea is easier to see.
