@@ -2237,6 +2237,7 @@
             <button type="button" class="quick-act act-explain" id="qaExplain" onclick="sendQuickAct('explain')" style="display:none">Explain</button>
             <button type="button" class="quick-act act-skip" id="qaSkip" onclick="sendQuickAct('skip')">Skip this</button>
             <button type="button" class="quick-act" id="qaTopic" onclick="sendQuickAct('topic')">New topic</button>
+            <button type="button" class="quick-act act-work" id="qaContinue" onclick="sendQuickAct('continue')" style="display:none">Continue lesson</button>
             <button type="button" class="quick-act act-work" id="qaExtra" onclick="sendQuickAct('extra')" style="display:none">Longer text</button>
           </div>
           <div class="math-signs" id="mathSignsRow" hidden>
@@ -7943,7 +7944,8 @@
         explain: { label: 'Explain', text: 'Explain this same paper item. If I have not answered yet, show the method or paper skill in 2–4 steps and stop before the letter or a finished essay. If I already answered, mark it then say why (writing: task / coherence / words / grammar — no band). Stay on this item.' },
         skip: { label: 'Skip this', text: 'Skip this item — do not mark it wrong. Same skill and exam track. Give one new paper-shaped item now. If this one felt easy or already done, make the next a bit harder or a different passage. Wait for my answer.' },
         topic: { label: 'New topic', text: 'List every theme in this exam track from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new item yet. Do not switch IELTS / SAT / TOEFL unless I asked.' },
-        extra: { label: 'Longer text', text: 'Longer text — same skill, one new item with a longer passage or script. Add a short Word help line for 2–4 hard words if needed. Wait for my answer.' }
+        extra: { label: 'Longer text', text: 'Longer text — same skill, one new item with a longer passage or script. Add a short Word help line for 2–4 hard words if needed. Wait for my answer.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Keep this exam track. Next paper-shaped item forward on the same skill. Wait for my answer. Do not list themes. Do not switch IELTS / SAT / TOEFL.' }
       },
       scholarship_prep: {
         show: true,
@@ -7953,7 +7955,8 @@
         explain: { label: 'Explain', text: 'Explain this same item. If I have not answered yet, show the method and stop before the letter. If I already answered, mark it then say why. Stay on this item.' },
         skip: { label: 'Skip this', text: 'Skip this item — do not mark it wrong. Same scholarship track. Give one new item now. Wait for my answer.' },
         topic: { label: 'New topic', text: 'List every theme in this scholarship track from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new item yet.' },
-        extra: { label: 'Harder', text: 'Harder — keep this scholarship track and skill. Give ONE new item one notch harder than the last (tighter trap, extra step, or closer options). Do not mark the last item again. Wait for my answer. Do not reveal the letter until I answer.' }
+        extra: { label: 'Harder', text: 'Harder — keep this scholarship track and skill. Give ONE new item one notch harder than the last (tighter trap, extra step, or closer options). Do not mark the last item again. Wait for my answer. Do not reveal the letter until I answer.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Keep this scholarship track. Next paper-shaped item forward. Wait for my answer. Do not list themes.' }
       },
       special_math: {
         show: true,
@@ -7963,7 +7966,8 @@
         explain: { label: 'Explain', text: 'Explain this same item. Method path: 2–4 steps how to start. If I have not answered yet, stop one step before the boxed answer and wait. If I already answered, mark it and explain the deciding move. Stay on this problem. Do not start a new item.' },
         skip: { label: 'Skip this', text: 'Skip this problem — do not mark it wrong. Same track and idea-family. Give one new contest-shaped item now. If this one felt easy or already solved, make the next a bit harder or a different story. Wait for my answer.' },
         topic: { label: 'New topic', text: 'List every theme in this Special Math track from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new item yet.' },
-        extra: { label: 'Harder', text: 'Harder — same skill, one step up. New contest-shaped item only. Wait for my answer.' }
+        extra: { label: 'Harder', text: 'Harder — same skill, one step up. New contest-shaped item only. Wait for my answer.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same Special Math track. Next contest-shaped item forward on this path. Wait for my working. Do not list themes.' }
       },
       general_math: {
         show: true,
@@ -7971,7 +7975,8 @@
         practice: { label: 'Try another', text: 'Try another — same idea, new numbers or story. One problem. Wait for my answer.' },
         hint: { label: 'Hint', text: 'Give one short Hint or Tip on the same problem — not the full answer. Then wait for me to try.' },
         skip: { label: 'Skip this', text: 'Skip this problem — do not mark it wrong. Same idea. Give one new problem now (new numbers or story). If this felt easy or already done, make the next a bit harder. Wait for my answer.' },
-        topic: { label: 'New idea', text: 'List every General Math theme from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new problem yet.' }
+        topic: { label: 'New idea', text: 'List every General Math theme from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new problem yet.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same math idea. Next problem forward (new numbers or one step further). Wait for my answer. Do not list themes.' }
       },
       general_english: {
         show: true,
@@ -7979,7 +7984,8 @@
         practice: { label: 'Try again', text: 'Try again — same language move, new situation. One model + one try. Wait for my line.' },
         hint: { label: 'Hint', text: 'Give one short Hint or a stem I can finish — not the full answer. Then wait for me to try.' },
         skip: { label: 'Skip this', text: 'Skip this try — do not mark it wrong. Same language move. Give one new short try now. If this felt easy, raise it a little. Wait for my line.' },
-        topic: { label: 'New topic', text: 'List every General English theme from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new task yet.' }
+        topic: { label: 'New topic', text: 'List every General English theme from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new task yet.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same language move. Next short try forward. Wait for my line. Do not list themes.' }
       },
       advanced_english: {
         show: true,
@@ -7987,7 +7993,8 @@
         practice: { label: 'Practice more', text: 'Practice more — same skill and level. Give one new short write or speak task (or a rewrite of the last piece if I just finished one). Wait for my text. Do not switch theme.' },
         hint: { label: 'Hint', text: 'Give one short Hint or Tip on the same piece — not a full rewrite. Then wait for me to try.' },
         skip: { label: 'Skip this', text: 'Skip this task — do not mark it wrong. Same skill and level. Give one new short write or speak task now. If this felt easy, raise it a little. Wait for my text.' },
-        topic: { label: 'New topic', text: 'List every Advanced English theme for this level from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new task yet.' }
+        topic: { label: 'New topic', text: 'List every Advanced English theme for this level from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new task yet.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same skill and level. Next short write or speak task forward. Wait for my text. Do not list themes.' }
       },
       vocabulary_building: {
         show: true,
@@ -7995,7 +8002,8 @@
         practice: { label: 'Another set', text: 'Another set — same technique, 2–3 new target items in a context cluster. Wait for my guesses one-by-one.' },
         hint: { label: 'Hint', text: 'Give one short Hint on the current word — not the full meaning first. Then wait for me to guess.' },
         skip: { label: 'Skip this', text: 'Skip this item — do not mark it wrong. Same theme. Give the next target or a new cluster item. If this word felt easy, pick a harder one. Wait for my guess.' },
-        topic: { label: 'New theme', text: 'List every Vocabulary Building theme from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new set yet.' }
+        topic: { label: 'New theme', text: 'List every Vocabulary Building theme from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new set yet.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same technique. Next cluster or next target word forward. Wait for my guess. Do not list themes.' }
       },
       spelling_bee: {
         show: true,
@@ -8003,7 +8011,8 @@
         practice: { label: 'Next word', text: 'Next word in this mode. Word card only. Do not give the letters. Wait for me to spell.' },
         hint: { label: 'Hint', text: 'One short sound, pattern, or origin cue for the current word — not the full spelling. Then wait.' },
         skip: { label: 'Skip this', text: 'Skip this word — do not count it as a miss. Next word in the same mode. Do not show the letters. Wait for me to spell.' },
-        topic: { label: 'New list', text: 'List the three modes (Patterns, Origins, Mini-bee) then every Spelling Bee theme from the theme bank. Number them. Wait for me to pick. Do not start a word yet.' }
+        topic: { label: 'New list', text: 'List the three modes (Patterns, Origins, Mini-bee) then every Spelling Bee theme from the theme bank. Number them. Wait for me to pick. Do not start a word yet.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same Bee mode. Next word card forward. Do not show the letters. Wait for me to spell.' }
       },
       skills_path: {
         show: true,
@@ -8011,7 +8020,8 @@
         practice: { label: 'Try again', text: 'Try again — same module skill, new short try. Wait for my answer.' },
         hint: { label: 'Hint', text: 'One short Hint or Tip on this try — not the full answer. Then wait.' },
         skip: { label: 'Skip this', text: 'Skip this prompt — do not mark it wrong. Same module. Give a new short try now. If this felt easy, raise it a little. Wait for my answer.' },
-        topic: { label: 'Next module?', text: 'List all four Skills Path modules in order: 1 Critical thinking 2 Essay writing 3 Storytelling 4 Research paper. Wait for me to pick. Do not start a new task yet.' }
+        topic: { label: 'Next module?', text: 'List all four Skills Path modules in order: 1 Critical thinking 2 Essay writing 3 Storytelling 4 Research paper. Wait for me to pick. Do not start a new task yet.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same Skills Path module. Next short try forward. Wait for my answer. Do not list modules unless I asked.' }
       },
       languages: {
         show: true,
@@ -8019,7 +8029,8 @@
         practice: { label: 'Say it again', text: 'Say it again — same target phrase in a new tiny situation. One line for me to say or write. Wait.' },
         hint: { label: 'Hint', text: 'One short Hint (English tip + optional target-language stem). Not the full answer. Then wait.' },
         skip: { label: 'Skip this', text: 'Skip this phrase — do not mark it wrong. Same level. Give one new phrase or try. If this felt easy, raise it a little. Wait for my line.' },
-        topic: { label: 'New phrase', text: 'List every theme for this language level from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new drill yet.' }
+        topic: { label: 'New phrase', text: 'List every theme for this language level from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new drill yet.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same language level. Next target phrase forward. Wait for my line. Do not list themes.' }
       },
       french: null,
       spanish: null,
@@ -8030,15 +8041,17 @@
         practice: { label: 'Run it again', text: 'Run it again — same goal, one working step this block. Wait for my try. Do not dump a full program.' },
         hint: { label: 'Hint', text: 'One short Hint about the bug or next step — not the full fix. Then wait for me to try.' },
         skip: { label: 'Skip this', text: 'Skip this step — do not mark it wrong. Same block goal. Give one new working step now. If this felt too easy, raise the challenge a little. No full program dump. Wait for my try.' },
-        topic: { label: 'New topic', text: 'List every Coding theme for THIS sub-subject only (Scratch / Python / Web / App / Game / Basic Coding — whichever I started). Number them 1…N from the Coding theme bank. Wait for me to pick. Do not invent extra themes. Do not list AI & Robot / sensor / motor / microcontroller themes. Do not paste a full solution. Do not start the next step until I pick a number.' }
+        topic: { label: 'New topic', text: 'List every Coding theme for THIS sub-subject only (Scratch / Python / Web / App / Game / Basic Coding — whichever I started). Number them 1…N from the Coding theme bank. Wait for me to pick. Do not invent extra themes. Do not list AI & Robot / sensor / motor / microcontroller themes. Do not paste a full solution. Do not start the next step until I pick a number.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same Coding sub-subject and block goal. Next working step forward. Wait for my try. Do not dump a full program. Do not list themes.' }
       },
       ai_and_robot: {
         show: true,
         start: { label: "Let's start", text: "Let's start this lesson. Skip extra hello. One first small build step. Wait for my try." },
-        practice: { label: 'Try again', text: 'Try again — same build or behavior, one working step. Wait for my try.' },
+        practice: { label: 'Practice more', text: 'Practice more — same idea in this sub-subject. One new small step or a similar try. Wait for my try. Do not wrap up. Do not list themes.' },
         hint: { label: 'Hint', text: 'One short Hint on the next step — not the full design. Then wait.' },
         skip: { label: 'Skip this', text: 'Skip this step — do not mark it wrong. Same build idea. Give one new small step now. If this felt too easy, raise it a little. Wait for my try.' },
-        topic: { label: 'New build', text: 'List every AI & Robot theme for this sub-subject from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a full project yet.' }
+        topic: { label: 'New topic', text: 'List every AI & Robot theme for this sub-subject from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a full project yet.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or assign homework. Keep going on THIS same path — next working step forward, a bit further than the last try. Wait for me. Do not list themes. Do not switch sub-subject.' }
       },
       health_science: {
         show: true,
@@ -8046,7 +8059,8 @@
         practice: { label: 'Try another', text: 'Try another — same idea, new short question. Wait for my answer.' },
         hint: { label: 'Hint', text: 'One short Hint — not the full answer. Then wait.' },
         skip: { label: 'Skip this', text: 'Skip this question — do not mark it wrong. Same idea. Give a new short question now. If this felt easy, raise it a little. Wait for my answer.' },
-        topic: { label: 'New topic', text: 'List every Health Science theme from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new question yet.' }
+        topic: { label: 'New topic', text: 'List every Health Science theme from the theme bank. Number them 1…N. Wait for me to pick. Do not invent extra themes. Do not start a new question yet.' },
+        continue: { label: 'Continue lesson', text: 'Time remains. Do not stop, recap, or homework-close. Same Health idea. Next short question forward. Wait for my answer. Do not list themes.' }
       }
     };
     QUICK_ACT_PRESETS.french = QUICK_ACT_PRESETS.languages;
@@ -8213,6 +8227,7 @@
       applyBtn('qaExplain', preset.explain);
       applyBtn('qaSkip', preset.skip);
       applyBtn('qaTopic', preset.topic);
+      applyBtn('qaContinue', preset.continue);
       applyBtn('qaExtra', preset.extra);
     }
     function sendQuickAct(kind) {
