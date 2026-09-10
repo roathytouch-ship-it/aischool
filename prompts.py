@@ -267,10 +267,10 @@ AI_ROBOT_THEMES: dict[str, list[dict]] = {
     ],
     "Electronic Fundamentals": [
         {"theme": "Power, open/closed circuit idea (no live wiring)", "grades": (5, 12)},
-        {"theme": "What a component does in one sentence", "grades": (5, 11)},
-        {"theme": "Sensors vs actuators (sense vs act)", "grades": (6, 12)},
+        {"theme": "Battery, switch, lamp in one loop — what each box does", "grades": (5, 11)},
+        {"theme": "Sensors vs actuators on a board (sense vs act)", "grades": (6, 12)},
         {"theme": "Safe lab habits — conceptual only", "grades": (5, 12)},
-        {"theme": "Read a simple block diagram", "grades": (6, 12)},
+        {"theme": "Read a simple block diagram (boxes and arrows)", "grades": (6, 12)},
         {"theme": "Why grounding / safety matters (no how-to for mains)", "grades": (7, 12)},
     ],
     "Programming the Microcontroller": [
@@ -308,9 +308,9 @@ AI_ROBOT_THEMES: dict[str, list[dict]] = {
     "Semiconductor": [
         {"theme": "Conductor, insulator, semiconductor — school words", "grades": (6, 12)},
         {"theme": "Why computers and robots need chips", "grades": (6, 12)},
-        {"theme": "Diode idea — current prefers one way (concept only)", "grades": (7, 12)},
-        {"theme": "Transistor as a tiny switch (idea, not a wiring lab)", "grades": (7, 12)},
+        {"theme": "Tiny switch idea — on/off, not a wiring lab", "grades": (7, 12)},
         {"theme": "A chip is many tiny switches working together", "grades": (7, 12)},
+        {"theme": "Binary on the chip — why on/off can mean 0 and 1", "grades": (7, 12)},
         {"theme": "Where chips live — phone, board, robot “brain”", "grades": (6, 12)},
         {"theme": "Heat and limits — chips can get too hot (concept)", "grades": (8, 12)},
     ],
@@ -1481,7 +1481,9 @@ SUBJECT FOCUS — AI & Robot (teacher Calliope):{track_bit}
 - Good practice: explain, order steps, predict what a sensor or rule would do.
 - Safety first; stay age-appropriate.
 - Stay inside the chosen sub-subject. Soft tracks now include Semiconductor and Physical AI.
-- Semiconductor: ideas only — conductor / insulator / semiconductor, chip as many tiny switches, why robots need chips. Never fab steps, chemical names, how to etch silicon, or “build a transistor at home.”
+- Electronic Fundamentals vs Semiconductor (do not blend):
+  - Electronics = the loop: power, open/closed path, battery / switch / lamp, block diagram, sense-vs-act as boxes, lab safety ideas. Name a part only as “this box in the circuit.” Do **not** teach conductor/insulator/semiconductor, silicon, “why a chip works,” or “transistor = tiny switch.”
+  - Semiconductor = one level deeper: materials in school words, chip as many tiny on/off switches, why a robot needs a chip, heat/limits. Ideas only. Never fab, etch, chemical names, or “build a transistor at home.” Do **not** teach circuit loops, wiring, or mains safety — send that curiosity to Electronics in one line, then stay here.
 - Physical AI: robot-in-the-world vs chat-only AI; body + sensors + rules; messy real world; sense → decide → act. Concept + predict. No live robot driving instructions that could hurt someone. Motors / Sensors tracks stay for those parts if they picked those instead.
 - Chips: Practice more = another try on the same idea. New topic = list this sub-subject’s themes, then wait. Continue lesson = time remains; do not wrap or homework-close; next step forward on the same path. Skip this = new step, same idea, not marked wrong.
 
