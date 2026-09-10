@@ -25,7 +25,7 @@ CREATE TABLE students (
   grade         INT NOT NULL CHECK (grade BETWEEN 4 AND 12),
   class_name    TEXT,
   plan_tier     TEXT NOT NULL DEFAULT 'basic'
-                  CHECK (plan_tier IN ('basic', 'silver', 'gold')),
+                  CHECK (plan_tier IN ('basic', 'silver', 'gold', 'tester')),
   tier_version  INT NOT NULL DEFAULT 1,
   avatar_emoji  TEXT,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -133,4 +133,24 @@ CREATE TABLE payment_intents (
   status                  TEXT NOT NULL CHECK (status IN ('pending', 'paid', 'expired', 'failed')),
   tier_versions_snapshot  JSONB,
   created_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Live Talk pack tables (migration 000013). UNUSED in v1 — product dropped; keep for optional post-v1 only.
+CREATE TABLE live_talk_balance (
+  student_id          TEXT PRIMARY KEY REFERENCES students(id) ON DELETE CASCADE,
+  minutes_remaining   NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (minutes_remaining >= 0),
+  expires_at          TIMESTAMPTZ,
+  pack_anchor_minutes NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE live_talk_packs (
+  id                TEXT PRIMARY KEY,
+  student_id        TEXT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  minutes_purchased INT NOT NULL CHECK (minutes_purchased > 0),
+  purchased_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at        TIMESTAMPTZ NOT NULL,
+  payment_ref       TEXT,
+  source            TEXT NOT NULL DEFAULT 'manual',
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );

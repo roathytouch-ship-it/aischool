@@ -3841,8 +3841,11 @@
 
     // Demo default Gold. Onboard can set basic|silver|gold.
     let planType = 'gold';
-    const planMinutes = { basic: 25, silver: 45, gold: 45 };
-    const planSessions = { basic: 1, silver: 3, gold: 4 };
+    const planMinutes = { basic: 25, silver: 45, gold: 45, tester: 45 };
+    const planSessions = { basic: 1, silver: 3, gold: 4, tester: 10 };
+    function isPaidPlan() {
+      return planType === 'silver' || planType === 'gold' || planType === 'tester';
+    }
     let sessionsUsedToday = 2; // demo: 2 already used for Gold → 2 of 4 left
     // Basic Subject Passes (demo): Math + Coding unlocked
     let subjectPasses = { 'General Math': true, 'Coding': true };
@@ -3855,7 +3858,7 @@
       if (label) label.textContent = left + ' of ' + total + ' sessions left';
       const poolHint = document.getElementById('todayPoolHint');
       if (poolHint) {
-        if ((planType === 'gold' || planType === 'silver') && reviewSeconds > 0) {
+        if (isPaidPlan() && reviewSeconds > 0) {
           const m = Math.ceil(reviewSeconds / 60);
           poolHint.innerHTML = '<div style="font-size:12px;color:#b45309;font-weight:600">✨ Review ' + m + ' min</div><div style="font-size:11px;color:var(--tg-hint)">Renews at midnight (Phnom Penh)</div>';
           poolHint.style.display = 'block';
@@ -3884,7 +3887,7 @@
     let isReviewMode = false;
 
     function subjectUnlocked(subject) {
-      if (planType === 'silver' || planType === 'gold') return true;
+      if (isPaidPlan()) return true;
       const base = subject.replace(/ · .*$/, '');
       if (freeCores[base] || freeCores[subject]) return true;
       if (subjectPasses[subject] || subjectPasses[base]) return true;
@@ -3936,7 +3939,7 @@
         const reviewBtn = el.querySelector('.review-btn');
         const reflectBtn = el.querySelector('.reflect-btn');
         if (reviewBtn) {
-          const showRev = (planType === 'gold' || planType === 'silver') && subjectsDoneToday[c.subject];
+          const showRev = isPaidPlan() && subjectsDoneToday[c.subject];
           reviewBtn.classList.toggle('show-review', !!showRev);
         }
         if (reflectBtn) {
@@ -4942,7 +4945,7 @@
     }
     function languageUnlocked() {
       // Silver/Gold always; Basic only with Languages Subject Pass (no Live Talk pack in v1)
-      if (planType === 'silver' || planType === 'gold') return true;
+      if (isPaidPlan()) return true;
       if (typeof subjectUnlocked === 'function' && subjectUnlocked('Languages')) return true;
       return false;
     }

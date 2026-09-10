@@ -149,8 +149,9 @@ def _looks_like_cut_off_glitch(text: str) -> bool:
 
 
 FREE_CORES = {"general_math", "general_english"}
-PLAN_SESSIONS = {"basic": 1, "silver": 3, "gold": 4}
-PLAN_MINUTES = {"basic": 25, "silver": 45, "gold": 45}
+PLAN_SESSIONS = {"basic": 1, "silver": 3, "gold": 4, "tester": 10}
+PLAN_MINUTES = {"basic": 25, "silver": 45, "gold": 45, "tester": 45}
+TESTER_PER_SUBJECT_CAP = 10
 TEACHERS = {
     "general_math": "alex",
     "general_english": "emma",
@@ -625,6 +626,18 @@ class MemoryStudyStore:
     def has_pass(self, student_id: str, subject_key: str) -> bool:
         return subject_key in self.passes.get(student_id, [])
 
+    def count_lessons_today(self, student_id: str, subject_key: str, d: date) -> int:
+        n = 0
+        for s in self.sessions.values():
+            if (
+                s.student_id == student_id
+                and s.subject_key == subject_key
+                and s.usage_date == d
+                and s.mode == "lesson"
+            ):
+                n += 1
+        return n
+
     def grant_pass(self, student_id: str, subject_key: str) -> None:
         self.passes.setdefault(student_id, [])
         if subject_key not in self.passes[student_id]:
@@ -1047,6 +1060,26 @@ class PostgresStudyStore:
                 {"sid": student_id, "sk": subject_key},
             ).first()
             return row is not None
+
+    def count_lessons_today(self, student_id: str, subject_key: str, d: date) -> int:
+        import db as db_pool
+        from sqlalchemy import text
+
+        with db_pool.get_connection() as conn:
+            row = conn.execute(
+                text(
+                    """
+                    SELECT COUNT(*) AS n
+                    FROM study_sessions
+                    WHERE student_id = :sid
+                      AND subject_key = :sk
+                      AND usage_date = :d
+                      AND mode = 'lesson'
+                    """
+                ),
+                {"sid": student_id, "sk": subject_key, "d": d},
+            ).first()
+            return int(row["n"] if row is not None else 0)
 
     def grant_pass(self, student_id: str, subject_key: str) -> None:
         import db as db_pool
@@ -1477,7 +1510,7 @@ class StudyService:
         return closed
 
     def can_study(self, plan_tier: str, student_id: str, subject_key: str) -> bool:
-        if plan_tier in ("silver", "gold"):
+        if plan_tier in ("silver", "gold", "tester"):
             return True
         if subject_key in FREE_CORES:
             return True
@@ -1534,16 +1567,29 @@ class StudyService:
         usage = self.store.get_usage(student_id, d)
 
         if mode == "lesson":
-            cap = PLAN_SESSIONS.get(plan_tier, 1)
-            if usage["sessions_used"] >= cap:
-                raise StudyError(
-                    "session_cap",
-                    f"No study sessions left today ({cap} on {plan_tier})",
-                    403,
-                )
+            if plan_tier == "tester":
+                used_here = 0
+                try:
+                    used_here = self.store.count_lessons_today(student_id, subject_key, d)
+                except Exception as e:
+                    print(f"[study_service] tester subject count: {e}")
+                if used_here >= TESTER_PER_SUBJECT_CAP:
+                    raise StudyError(
+                        "session_cap",
+                        f"Tester cap: {TESTER_PER_SUBJECT_CAP} lessons today on this subject",
+                        403,
+                    )
+            else:
+                cap = PLAN_SESSIONS.get(plan_tier, 1)
+                if usage["sessions_used"] >= cap:
+                    raise StudyError(
+                        "session_cap",
+                        f"No study sessions left today ({cap} on {plan_tier})",
+                        403,
+                    )
             limit = PLAN_MINUTES.get(plan_tier, 25) * 60
         elif mode == "review":
-            if plan_tier not in ("silver", "gold"):
+            if plan_tier not in ("silver", "gold", "tester"):
                 raise StudyError("review_not_allowed", "Review is Silver/Gold only", 403)
             if usage["review_seconds_used"] >= 15 * 60:
                 raise StudyError("review_exhausted", "Review pool used up for today", 403)

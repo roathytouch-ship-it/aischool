@@ -27,7 +27,7 @@ INSERT INTO students (
   'stu_demo_sokha',
   'acc_demo_sokha',
   'acc_demo_parent',
-  5,
+  10,
   NULL,
   'basic',
   1,
@@ -53,7 +53,8 @@ ON CONFLICT (student_id) DO UPDATE SET
 -- Subject Pass: Coding for current calendar month (Phnom Penh “today” approximated by CURRENT_DATE;
 -- app still uses Asia/Phnom_Penh for pools)
 -- subject_key values (examples): general_math, general_english, advanced_english, special_math,
--- exam_preparation, coding, ai_and_robot, spelling_bee, french, spanish
+-- exam_preparation, coding, ai_and_robot, spelling_bee, skills_path, health_science (pilot G4–9),
+-- french, spanish, russian (or languages + track)
 INSERT INTO subject_passes (
   id, student_id, subject_key, period_start, period_end, status, created_at
 ) VALUES (
@@ -89,6 +90,40 @@ VALUES (
   0
 )
 ON CONFLICT (student_id, usage_date) DO NOTHING;
+
+-- Staff tester (Gold++): all subjects, 10 lessons / subject / day. Web PIN 9010.
+-- Run migration 000015 first or this INSERT will fail the plan_tier CHECK.
+INSERT INTO accounts (id, role, telegram_user_id, display_name, language)
+VALUES ('acc_demo_tester', 'student', NULL, 'Staff Tester', 'en')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO students (
+  id, account_id, parent_id, grade, class_name, plan_tier, tier_version, avatar_emoji
+) VALUES (
+  'stu_demo_tester',
+  'acc_demo_tester',
+  NULL,
+  10,
+  NULL,
+  'tester',
+  1,
+  '🛠️'
+)
+ON CONFLICT (id) DO UPDATE SET plan_tier = 'tester';
+
+INSERT INTO web_pins (student_id, pin_hash, failed_attempts, locked_until, updated_at)
+VALUES (
+  'stu_demo_tester',
+  '29f00a4c523e9fd091ef34352e2e2a5c5755c462ae3b6a5bbde29d97a02ac891',
+  0,
+  NULL,
+  now()
+)
+ON CONFLICT (student_id) DO UPDATE SET
+  pin_hash = EXCLUDED.pin_hash,
+  failed_attempts = 0,
+  locked_until = NULL,
+  updated_at = now();
 
 COMMIT;
 
